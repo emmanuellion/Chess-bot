@@ -4,7 +4,7 @@ import json
 
 print("La partie va commencer !")
 client = discord.Client()
-token = "ODAxODc4NjAxMDM3MzgxNjYy.YAnFpA.ijQSkeaWJPaP5pv4ECH6UCl2-iw"
+token = "TOKEN BOT DISCORD"
 bot = commands.Bot(command_prefix="!match_")
 
 
