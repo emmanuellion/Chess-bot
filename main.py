@@ -4,8 +4,8 @@ import json
 
 print("La partie va commencer !")
 client = discord.Client()
-token = "ODAxODc4NjAxMDM3MzgxNjYy.YAnFpA.ijQSkeaWJPaP5pv4ECH6UCl2-iw"
-bot = commands.Bot(command_prefix="!match_")
+token = "ODAxODc4NjAxMDM3MzgxNjYy.YAnFpA.s0fJEBdu9fW9CqgOl_VAJgCjwas"
+bot = commands.Bot(command_prefix="!")
 
 
 def add_account(arg1, arg2, load, id_member):
@@ -33,8 +33,8 @@ async def on_ready():
         with open('register.json') as load:
             load = json.load(load)
     except FileNotFoundError:
-        with open('register.json','w') as load:
-            load = {}
+        open('register.json', 'w')
+        load = {}
     try:
         print(load['id'])
     except KeyError:
@@ -295,6 +295,27 @@ async def list_player(ctx):
                                                                   "\n**",
                             inline=False)
         await ctx.send(embed=embed)
+
+
+@bot.command()
+async def delete_class(ctx, arg):
+    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+        with open('register.json') as load:
+            load = json.load(load)
+        if arg.lower() in load:
+            player_list = []
+            for player in load[arg.lower()].keys():
+                if player != 'score':
+                    player_list.append(player)
+            del load[arg.lower()]
+            for player in list(load['players'].keys()):
+                if player in player_list:
+                    del load['players'][player]
+            with open('register.json', "w") as f:
+                json.dump(load, f, ensure_ascii=False, indent=4)
+            await ctx.send(f"L'effacement de la classe {arg.lower()} s'est bien éffectué")
+        else:
+            await ctx.send("La classe renseignée n'existe pas ¯\_(ツ)_/¯")
 
 
 bot.run(token)
