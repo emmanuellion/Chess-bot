@@ -1,10 +1,11 @@
 import discord
 from discord.ext import commands
 import json
+import random
 
 print("La partie va commencer !")
 client = discord.Client()
-#token = "TOKEN BOT DISCORD"
+token = "ODAxODc4NjAxMDM3MzgxNjYy.YAnFpA.T7GglpU_DfMoxmHmGRvHG0Kdo4k"
 bot = commands.Bot(command_prefix="!")
 
 
@@ -17,7 +18,8 @@ def add_account(arg1, arg2, load, id_member):
             load[arg1.lower()][arg2.lower()] = b
             res = 0
     else:
-        b = {'score': 0.0, arg2.lower(): {'id': id_member, 'score': 0.0, 'win': 0, 'loose': 0, 'poule': "A changer", "disponible": True}}
+        b = {'score': 0.0, arg2.lower(): {'id': id_member, 'score': 0.0, 'win': 0, 'loose': 0, 'poule': "A changer",
+                                          "disponible": True}}
         load[arg1.lower()] = b
         res = 0
     load['id'][id_member] = id_member
@@ -67,6 +69,12 @@ async def on_ready():
                     if player != "score":
                         if load[biblio][player]['poule'] != "A changer":
                             load['poule_done'][player] = load[biblio][player]['poule']
+    with open('register.json', "w") as f:
+        json.dump(load, f, ensure_ascii=False, indent=4)
+    for i in range(0, 9):
+        add_account("classe_1", f"j_{i}", load, 414476886501228556)
+    for i in range(9, 16):
+        add_account("classe_2", f"j_{i}", load, 414476886501228556)
     with open('register.json', "w") as f:
         json.dump(load, f, ensure_ascii=False, indent=4)
     await bot.change_presence(status=discord.Status.online, activity=discord.Game("Joue aux échecs"))
@@ -217,18 +225,18 @@ async def register(ctx, membre: discord.Member, arg1, arg2):
     res = 2
     with open('register.json') as load:
         load = json.load(load)
-    id = str(membre.id)
-    if id != "803313379992272967" and id != "466005935404351488" and id != "414476886501228556":
-        if id in load['id']:
+    id_member = str(membre.id)
+    if id_member != "803313379992272967" and id_member != "466005935404351488" and id_member != "414476886501228556":
+        if id_member in load['id']:
             await ctx.send("Désolé mais vous ne pouvez pas enregistrer plus de 1 participant")
         else:
             if ctx.author != membre:
                 await ctx.send(
                     "Mais attends ... Tu essayerais pas de gruger le système pour confirmer toi-même le résultat ?? O_O (je te vois...)")
             else:
-                res = add_account(arg1, arg2, load, id)
+                res = add_account(arg1, arg2, load, id_member)
     else:
-        res = add_account(arg1, arg2, load, id)
+        res = add_account(arg1, arg2, load, id_member)
     if res == 0:
         await ctx.send(f"Le participant {arg2} de la classe {arg1} est enregistré")
     elif res == 1:
@@ -332,6 +340,41 @@ async def delete_class(ctx, arg):
             await ctx.send(f"L'effacement de la classe {arg.lower()} s'est bien éffectué")
         else:
             await ctx.send("La classe renseignée n'existe pas ¯\_(ツ)_/¯")
+
+
+@bot.command()
+async def poule(ctx):
+    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+        with open('register.json') as load:
+            load = json.load(load)
+        all_player_list = []
+        for biblio in load.keys():
+            if biblio not in ['id', 'id_ban', 'players', 'poule_done']:
+                for key in load[biblio].keys():
+                    if key != "score":
+                        all_player_list.append(key)
+        if len(all_player_list) % 8 == 0:  # and len(all_player_list) == 32
+            list_poule = ['A', 'B']
+            for letter in list_poule:
+                same_poule = []
+                j = random.randint(0, len(all_player_list)-1)
+                for i in range(0, 8):
+                    player = all_player_list[j]
+                    if player in load['poule_done']:
+                        while player in load['poule_done']:
+                            j = random.randint(0, len(all_player_list)-1)
+                            player = all_player_list[j]
+                    same_poule.append(player)
+                    load['poule_done'][player] = letter
+                for player in same_poule:
+                    class_player = load['players'][player]
+                    load[class_player][player]['poule'] = letter
+            with open('register.json', "w") as f:
+                json.dump(load, f, ensure_ascii=False, indent=4)
+            await ctx.send("L'affectation aux poules à bien était éffectué")
+        else:
+            await ctx.send(
+                "L'adressage des poules aux participants n'est pas réalisable car le nombre total de participant n'est pas divisaible par poule de 8")
 
 
 bot.run(token)
