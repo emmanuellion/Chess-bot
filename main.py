@@ -9,6 +9,7 @@ client = discord.Client()
 bot = commands.Bot(command_prefix="!")
 
 
+# check done
 def add_account(arg1, arg2, load, id_member):
     if arg1.lower() in load:
         if arg2.lower() in load[arg1.lower()]:
@@ -22,14 +23,15 @@ def add_account(arg1, arg2, load, id_member):
                                           "disponible": True}}
         load[arg1.lower()] = b
         res = 0
-    load['id'][id_member] = id_member
+    if id_member not in load['id']:
+        load['id'][id_member] = id_member
     load['players'][arg2.lower()] = arg1.lower()
     with open('register.json', "w") as f:
         json.dump(load, f, ensure_ascii=False, indent=4)
     return res
 
 
-@bot.event
+@bot.event  # check done
 async def on_ready():
     try:
         with open('register.json') as load:
@@ -81,26 +83,25 @@ async def on_ready():
     print("La partie commence ...")
 
 
-@bot.command()
+@bot.command()  # check done
 async def _help(ctx):
     embed = discord.Embed(title="**__Résumé des commandes__**", description="", color=0xf0f0f0)
-    embed.add_field(name="**Pour une liste des commandes ainsi que leur description et explication "
-                         "d'utilisation, veuillez vous référer au site : **",
+    embed.add_field(name="**Pour une liste des commandes ainsi que leur description et explication d'utilisation, veuillez vous référer au site : **",
                     value="***https://mabule.github.io/chess.com/index.html***", inline=False)
     await ctx.send(embed=embed)
     print("Commande _help")
 
 
-@bot.command()
+@bot.command()  # check done
 async def result(ctx, member1: discord.Member, arg1, arg2, arg3, member2: discord.Member, arg4, arg5, arg6):
     with open('register.json') as load:
         load = json.load(load)
-    id1 = str(member1.id)
-    id2 = str(member2.id)
     if arg1.lower() in load:
         if arg2.lower() in load[arg1.lower()]:
             if arg4.lower() in load:
                 if arg5.lower() in load[arg4.lower()]:
+                    id1 = str(member1.id)
+                    id2 = str(member2.id)
                     load['id_ban'][id1] = id1
                     load['id_ban'][id1] = {"banned": id1, "class_banned": arg1.lower(), "name_banned": arg2.lower(),
                                            "to_confirm": id2, "class_confirm": arg4.lower(),
@@ -173,16 +174,16 @@ async def result_confirm(ctx, member: discord.Member, member1: discord.Member, a
                 del load['id_ban'][id1]
             elif arg1 == "n":
                 del load['id_ban'][id1]
-                embed = discord.Embed(title="CA TOURNE MAL EXPLICATION !!!!", description="Refus de défaite",
+                embed = discord.Embed(title="CA TOURNE MAL EXPLICATION !!!!", description="RefuS de défaite",
                                       color=0xff0000)
-                embed.add_field(name="\0", value=f"Refus du résultat du match entre : {member1} et {member2}")
+                embed.add_field(name="\0", value=f"RefuS du résultat du match entre : {member1} et {member2}")
                 await member.send(embed=embed)
                 await ctx.send("Le résultat du dernier match a donc était éffacé, l'information remontera à un "
                                "administrateur")
             else:
                 await ctx.send("Veuillez saisir un deuxième paramètre parmis les caractères 'y' ou 'n'")
         else:
-            await ctx.send(f"{member2} n'était pas votre adversaire !")
+            await ctx.send(f"{member2} n'était pas voters adversaire !")
     else:
         await ctx.send("La personne mentionnée n'a pas donné de résultat récemment")
     with open('register.json', "w") as f:
@@ -221,16 +222,16 @@ async def score_class(ctx, arg1):
 
 
 @bot.command()
-async def register(ctx, membre: discord.Member, arg1, arg2):
+async def register(ctx, member: discord.Member, arg1, arg2):
     res = 2
     with open('register.json') as load:
         load = json.load(load)
-    id_member = str(membre.id)
+    id_member = str(member.id)
     if id_member != "803313379992272967" and id_member != "466005935404351488" and id_member != "414476886501228556":
         if id_member in load['id']:
             await ctx.send("Désolé mais vous ne pouvez pas enregistrer plus de 1 participant")
         else:
-            if ctx.author != membre:
+            if ctx.author != member:
                 await ctx.send(
                     "Mais attends ... Tu essayerais pas de gruger le système pour confirmer toi-même le résultat ?? O_O (je te vois...)")
             else:
@@ -260,7 +261,7 @@ async def modif_class(ctx, arg1, arg2, arg3):
                 await ctx.send(
                     f"Le changement de la classe {arg1} pour la classe {arg3} du joueur {arg2} a bien était éffectué")
             else:
-                await ctx.send("Veuillez renseigner une classe d'arrivé existante :)")
+                await ctx.send("Veuillez renseigner une classe d'arrivée existante :)")
         else:
             await ctx.send(f"Aucun joueur de ce nom n'a été trouvé dans la classe {arg1}")
     else:
@@ -268,7 +269,7 @@ async def modif_class(ctx, arg1, arg2, arg3):
     print("Commande modif_class")
 
 
-@bot.command()
+@bot.command()  # check done
 async def modif_player(ctx, arg1, arg2, arg3):
     with open('register.json') as load:
         load = json.load(load)
@@ -289,19 +290,19 @@ async def modif_player(ctx, arg1, arg2, arg3):
             await ctx.send(f"Aucun joueur ne s'appelle {arg2} dans la classe {arg1}")
     else:
         await ctx.send("La classe du joueur n'existe pas")
-        print("Commande modif_player")
+    print("Commande modif_player")
 
 
-@bot.command()
+@bot.command()  # check done
 async def admin(ctx):
     if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
         with open('register.json') as load:
             load = json.load(load)
         await ctx.send(load)
-        print("Commande admin")
+    print("Commande admin")
 
 
-@bot.command()
+@bot.command()  # check done
 async def list_player(ctx):
     if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
         with open('register.json') as load:
@@ -314,9 +315,10 @@ async def list_player(ctx):
                                                                   "\n**",
                             inline=False)
         await ctx.send(embed=embed)
+    print("Commande list_player")
 
 
-@bot.command()
+@bot.command()  # check done
 async def delete_class(ctx, arg):
     if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
         with open('register.json') as load:
@@ -340,9 +342,10 @@ async def delete_class(ctx, arg):
             await ctx.send(f"L'effacement de la classe {arg.lower()} s'est bien éffectué")
         else:
             await ctx.send("La classe renseignée n'existe pas ¯\_(ツ)_/¯")
+    print("Commande delete_class")
 
 
-@bot.command()
+@bot.command()  # check done
 async def poule(ctx):
     if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
         with open('register.json') as load:
@@ -357,12 +360,12 @@ async def poule(ctx):
             list_poule = ['A', 'B']
             for letter in list_poule:
                 same_poule = []
-                j = random.randint(0, len(all_player_list)-1)
+                j = random.randint(0, len(all_player_list) - 1)
                 for i in range(0, 8):
                     player = all_player_list[j]
                     if player in load['poule_done']:
                         while player in load['poule_done']:
-                            j = random.randint(0, len(all_player_list)-1)
+                            j = random.randint(0, len(all_player_list) - 1)
                             player = all_player_list[j]
                     same_poule.append(player)
                     load['poule_done'][player] = letter
@@ -374,7 +377,18 @@ async def poule(ctx):
             await ctx.send("L'affectation aux poules à bien était éffectué")
         else:
             await ctx.send(
-                "L'adressage des poules aux participants n'est pas réalisable car le nombre total de participant n'est pas divisaible par poule de 8")
+                "L'adressage des poules aux participants n'est pas réalisable car le nombre total de participant n'est pas divisable par poule de 8")
+    print("Commande poule")
+
+
+@bot.command()
+async def test(ctx):
+    with open('register.json') as load:
+        load = json.load(load)
+    load['ctx'] = ctx.author
+    with open('register.json', "w") as f:
+        json.dump(load, f, ensure_ascii=False, indent=4)
+    #await ctx.author.send("coucou petite bite")
 
 
 bot.run(token)
