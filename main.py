@@ -4,7 +4,7 @@ import json
 
 print("La partie va commencer !")
 client = discord.Client()
-token = "TOKEN BOT DISCORD"
+#token = "TOKEN BOT DISCORD"
 bot = commands.Bot(command_prefix="!")
 
 
@@ -13,11 +13,11 @@ def add_account(arg1, arg2, load, id_member):
         if arg2.lower() in load[arg1.lower()]:
             res = 1
         else:
-            b = {'score': 0.0, 'win': 0, 'loose': 0, 'poule': "A changer", "disponible": True}
+            b = {'id': id_member, 'score': 0.0, 'win': 0, 'loose': 0, 'poule': "A changer", "disponible": True}
             load[arg1.lower()][arg2.lower()] = b
             res = 0
     else:
-        b = {'score': 0.0, arg2.lower(): {'score': 0.0, 'win': 0, 'loose': 0, 'poule': "A changer", "disponible": True}}
+        b = {'score': 0.0, arg2.lower(): {'id': id_member, 'score': 0.0, 'win': 0, 'loose': 0, 'poule': "A changer", "disponible": True}}
         load[arg1.lower()] = b
         res = 0
     load['id'][id_member] = id_member
@@ -39,6 +39,11 @@ async def on_ready():
         print(load['id'])
     except KeyError:
         load['id'] = {}
+        for biblio in load.keys():
+            if biblio not in ["id", "id_ban", "players", "poule_done"]:
+                for player in load[biblio].keys():
+                    if player != "score":
+                        load['id'][load[biblio][player]['id']] = load[biblio][player]['id']
     try:
         print(load['id_ban'])
     except KeyError:
@@ -56,6 +61,12 @@ async def on_ready():
         print(load['poule_done'])
     except KeyError:
         load['poule_done'] = {}
+        for biblio in load.keys():
+            if biblio not in ["id", "id_ban", "players", "poule_done"]:
+                for player in load[biblio].keys():
+                    if player != "score":
+                        if load[biblio][player]['poule'] != "A changer":
+                            load['poule_done'][player] = load[biblio][player]['poule']
     with open('register.json', "w") as f:
         json.dump(load, f, ensure_ascii=False, indent=4)
     await bot.change_presence(status=discord.Status.online, activity=discord.Game("Joue aux échecs"))
@@ -304,13 +315,18 @@ async def delete_class(ctx, arg):
             load = json.load(load)
         if arg.lower() in load:
             player_list = []
+            id_create_player = []
             for player in load[arg.lower()].keys():
                 if player != 'score':
                     player_list.append(player)
+                    id_create_player.append(load[arg.lower()][player]['id'])
             del load[arg.lower()]
             for player in list(load['players'].keys()):
                 if player in player_list:
                     del load['players'][player]
+            for id_key in list(load['id'].keys()):
+                if id_key in id_create_player:
+                    del load['id'][id_key]
             with open('register.json', "w") as f:
                 json.dump(load, f, ensure_ascii=False, indent=4)
             await ctx.send(f"L'effacement de la classe {arg.lower()} s'est bien éffectué")
