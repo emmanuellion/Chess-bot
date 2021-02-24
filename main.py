@@ -5,7 +5,7 @@ import random
 
 print("La partie va commencer !")
 client = discord.Client()
-token = "ODAxODc4NjAxMDM3MzgxNjYy.YAnFpA.T7GglpU_DfMoxmHmGRvHG0Kdo4k"
+#token = "TOKEN BOT DISCORD"
 bot = commands.Bot(command_prefix="!")
 
 
