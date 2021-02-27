@@ -18,14 +18,15 @@ def add_account(ctx, arg1, arg2, load, id_member):
             res = 1
         else:
             b = {'id': id_member, 'name': arg2.lower(), 'score': 0.0, 'win': 0, 'loose': 0, 'poule': "A changer",
-                 'disponible': True, 'color': "ffffff", "author": ctx, "cool-down_result": 0, "cool-down_confirm": 0}
+                 'disponible': True, 'color': "ffffff", 'author': ctx, 'cool-down_result': 0, 'cool-down_confirm': 0,
+                 'current-opponent': "opponent", 'opponent': {}}
             load[arg1.lower()][arg2.lower()] = b
             res = 0
     else:
         b = {'score': 0.0, arg2.lower(): {'id': id_member, 'name': arg2.lower(), 'score': 0.0, 'win': 0, 'loose': 0,
                                           'poule': "A changer",
-                                          'disponible': True, 'color': "ffffff", "author": ctx, "cool-down_result": 0,
-                                          "cool-down_confirm": 0}}
+                                          'disponible': True, 'color': "ffffff", 'author': ctx, 'cool-down_result': 0,
+                                          'cool-down_confirm': 0, 'current-opponent': "opponent", 'opponent': {}}}
         load[arg1.lower()] = b
         res = 0
     if id_member not in load['id']:
@@ -165,6 +166,11 @@ async def result_confirm(ctx, member: discord.Member, member1: discord.Member, a
             if arg1 == "y":
                 delta = datetime.datetime.timestamp(datetime.datetime.now()) - tree['cool-down_result']
                 if delta >= 60:
+                    for classe in load.keys():
+                        if classe not in cascade_mere:
+                            for player in load[classe].keys():
+                                if player != "score":
+                                    load[classe][player]['tour'] += 1
                     banned['score'] += float(load['id_ban'][id1]['score_id1'])
                     tree['score'] += float(load['id_ban'][id1]['score_id2'])
                     load[load['id_ban'][id1]['class_banned']]['score'] += float(load['id_ban'][id1]['score_id1'])
@@ -184,30 +190,40 @@ async def result_confirm(ctx, member: discord.Member, member1: discord.Member, a
                     joueur_trouve = 0
                     for key in load['players'].keys():
                         if load[load['players'][key]][key]['win'] == banned['win'] and load[load['players'][key]][key][
-                            'poule'] == banned['poule']:
+                            'poule'] == banned['poule'] and load[load['players'][key]][key][
+                            'disponible'] == True and key not in banned['opponent']:
                             await ctx.send(
                                 f"Le joueur {banned['name']}(<@{banned['id']}>) a un nouveau match avec {key['name']}(<@{key['id']}>)")
                             joueur_trouve = 1
                             banned['disponible'] = False
                             load[load['players'][key]][key]['disponible'] = False
+                            banned['current-opponent'] = load[load['players'][key]][key]['author']
+                            load[load['players'][key]][key]['current-opponent'] = banned['author']
                     if joueur_trouve == 0:
                         await ctx.send(
                             f"Aucun match n'a était trouvé pour {banned['name']} vous êtes donc mis en attente pour "
                             f"l'instant")
+                        banned['current-opponent'] = "Nobody"
                     joueur_trouve = 0
                     for key in load['players'].keys():
                         if load[load['players'][key]][key]['win'] == tree['win'] and load[load['players'][key]][key][
-                            'poule'] == tree['poule']:
+                            'poule'] == tree['poule'] and load[load['players'][key]][key][
+                            'disponible'] == True and key not in tree['opponent']:
                             await ctx.send(
                                 f"Le joueur {tree['name']}(<@{tree['id']}>) a un nouveau match avec {key['name']}(<@{key['id']}>)")
                             joueur_trouve = 1
                             tree['disponible'] = False
                             load[load['players'][key]][key]['disponible'] = False
+                            tree['current-opponent'] = load[load['players'][key]][key]['author']
+                            load[load['players'][key]][key]['current-opponent'] = tree['author']
                     if joueur_trouve == 0:
                         await ctx.send(
                             f"Aucun match n'a était trouvé pour {tree['name']} vous êtes donc mis en attente pour "
                             f"l'instant")
+                        tree['current-opponent'] = "Nobody"
                         # -----------------------------------------------
+                    banned['opponent'][tree['name']] = tree['author']
+                    tree['opponent'][banned['name']] = banned['author']
                     del load['id_ban'][id1]
                 else:
                     await ctx.send(f"Il faut attendre 60 secondes entre chaque commande result donc vous devez encore "
@@ -280,9 +296,9 @@ async def register(ctx, member: discord.Member, arg1, arg2):
                 await ctx.send(
                     "Mais attends ... Tu essayerais pas de gruger le système pour confirmer toi-même le résultat ?? O_O (je te vois...)")
             else:
-                res = add_account(ctx, arg1, arg2, load, id_member)
+                res = add_account(str(ctx.author), arg1, arg2, load, id_member)
     else:
-        res = add_account(ctx, arg1, arg2, load, id_member)
+        res = add_account(str(ctx.author), arg1, arg2, load, id_member)
     if res == 0:
         await ctx.send(f"Le participant {arg2} de la classe {arg1} est enregistré")
     elif res == 1:
@@ -440,13 +456,13 @@ async def show_profil(ctx):
         load = json.load(load)
     arg1, arg2, player = search(ctx, load)
     if player is not None:
-        embed = discord.Embed(title=f"Profil du joueur {arg2}", description="",
-                              color=int(player['color'], 16))
+        embed = discord.Embed(title=f"Profil du joueur {arg2}", description="", color=int(player['color'], 16))
         embed.add_field(name="Classe", value=arg1, inline=False)
+        embed.add_field(name="Poule", value=player['poule'], inline=False)
+        embed.add_field(name="Adversaire actuel", value=player['current-opponent'], inline=False)
         embed.add_field(name="Score total", value=player['score'], inline=False)
         embed.add_field(name="Nombre de match gagné", value=player['win'], inline=False)
         embed.add_field(name="Nombre de match perdu", value=player['loose'], inline=False)
-        embed.add_field(name="Poule", value=player['poule'], inline=False)
         await ctx.send(embed=embed)
     else:
         await ctx.send("Vous ne vous êtes pas enregistré en tant que joueur")
