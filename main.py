@@ -39,7 +39,7 @@ def add_account(ctx, arg1, arg2, load, id_member):
 
 
 def search(ctx, load):
-    tree = None
+    classe, player, tree = None, None, None
     for classe in load.keys():
         if classe not in cascade_mere:
             for player in load[classe].keys():
@@ -112,7 +112,8 @@ async def on_ready():
 async def _help(ctx):
     embed = discord.Embed(title="**__Résumé des commandes__**", description="", color=0xf0f0f0)
     embed.add_field(
-        name="**Pour une liste des commandes ainsi que leur description et explication d'utilisation, veuillez vous référer au site : **",
+        name="**Pour une liste des commandes ainsi que leur description et explication d'utilisation, veuillez vous "
+             "référer au site : **",
         value="***https://mabule.github.io/chess.com/index.html***", inline=False)
     await ctx.send(embed=embed)
     print("Commande _help")
@@ -163,99 +164,102 @@ async def result_confirm(ctx, member: discord.Member, member1: discord.Member, a
         load = json.load(load)
     trash, trash, tree = search(ctx, load)
     id2 = tree['id']
-    if id1 in load['id_ban']:
-        if id2 in load['id_ban'][id1]['to_confirm']:
-            banned = load[load['id_ban'][id1]['class_banned']][load['id_ban'][id1]['name_banned']]
-            if arg1 == "y":
-                delta = datetime.datetime.timestamp(datetime.datetime.now()) - tree['cool-down_confirm']
-                if delta >= 60:
-                    for classe in load.keys():
-                        if classe not in cascade_mere:
-                            for player in load[classe].keys():
-                                if player != "score":
-                                    load[classe][player]['tour'] += 1
-                    banned['score'] += float(load['id_ban'][id1]['score_id1'])
-                    tree['score'] += float(load['id_ban'][id1]['score_id2'])
-                    load[load['id_ban'][id1]['class_banned']]['score'] += float(load['id_ban'][id1]['score_id1'])
-                    load[load['id_ban'][id1]['class_confirm']]['score'] += float(load['id_ban'][id1]['score_id2'])
-                    embed = discord.Embed(title="VICTORY", description="", color=0x00ff00)
-                    embed.add_field(name="\0",
-                                    value=f"Résultat du match entre {member1} et {tree['author']} a été approuvé")
-                    await member.send(embed=embed)
-                    await ctx.send("Le résultat a bien était prit en compte !")
-                    # -----------------------------------------------
-                    if load['id_ban'][id1]['score_id1'] < load['id_ban'][id1]['score_id2']:
-                        banned['loose'] += 1
-                        tree['win'] += 1
-                    else:
-                        banned['win'] += 1
-                        tree['loose'] += 1
-                    joueur_trouve = 0
-                    for key in load['players'].keys():
-                        if load[load['players'][key]][key]['win'] == banned['win'] and load[load['players'][key]][key][
-                            'poule'] == banned['poule'] and load[load['players'][key]][key][
-                            'disponible'] == True and key not in banned['opponent']:
-                            opponent = load[load['players'][key]][key]
-                            if opponent['name'] != banned['name']:
-                                await ctx.send(
-                                    f"Le joueur {banned['name']} <@{banned['id']}> a un nouveau match avec {opponent['name']} <@{opponent['id']}>")
-                                joueur_trouve = 1
-                                banned['disponible'] = False
-                                load[load['players'][key]][key]['disponible'] = False
-                                banned['current-opponent'] = load[load['players'][key]][key]['author']
-                                load[load['players'][key]][key]['current-opponent'] = banned['author']
-                    if joueur_trouve == 0:
-                        await ctx.send(
-                            f"Aucun match n'a était trouvé pour {banned['name']} vous êtes donc mis en attente pour "
-                            f"l'instant")
-                        banned['current-opponent'] = "Nobody"
-                    joueur_trouve = 0
-                    for key in load['players'].keys():
-                        if load[load['players'][key]][key]['win'] == tree['win'] and load[load['players'][key]][key][
-                            'poule'] == tree['poule'] and load[load['players'][key]][key][
-                            'disponible'] == True and key not in tree['opponent']:
-                            opponent = load[load['players'][key]][key]
-                            if opponent['name'] != tree['name']:
-                                await ctx.send(
-                                    f"Le joueur {tree['name']}(<@{tree['id']}>) a un nouveau match avec {opponent['name']}(<@{opponent['id']}>)")
-                                joueur_trouve = 1
-                                tree['disponible'] = False
-                                load[load['players'][key]][key]['disponible'] = False
-                                tree['current-opponent'] = load[load['players'][key]][key]['author']
-                                load[load['players'][key]][key]['current-opponent'] = tree['author']
-                    if joueur_trouve == 0:
-                        await ctx.send(
-                            f"Aucun match n'a était trouvé pour {tree['name']} vous êtes donc mis en attente pour "
-                            f"l'instant")
-                        tree['current-opponent'] = "Nobody"
+    if tree is not None:
+        if id1 in load['id_ban']:
+            if id2 == load['id_ban'][id1]['to_confirm']:
+                banned = load[load['id_ban'][id1]['class_banned']][load['id_ban'][id1]['name_banned']]
+                if arg1 == "y":
+                    delta = datetime.datetime.timestamp(datetime.datetime.now()) - tree['cool-down_confirm']
+                    if delta >= 60:
+                        for classe in load.keys():
+                            if classe not in cascade_mere:
+                                for player in load[classe].keys():
+                                    if player != "score":
+                                        load[classe][player]['tour'] += 1
+                        banned['score'] += float(load['id_ban'][id1]['score_id1'])
+                        tree['score'] += float(load['id_ban'][id1]['score_id2'])
+                        load[load['id_ban'][id1]['class_banned']]['score'] += float(load['id_ban'][id1]['score_id1'])
+                        load[load['id_ban'][id1]['class_confirm']]['score'] += float(load['id_ban'][id1]['score_id2'])
+                        embed = discord.Embed(title="VICTORY", description="", color=0x00ff00)
+                        embed.add_field(name="\0",
+                                        value=f"Résultat du match entre {member1} et {tree['author']} a été approuvé")
+                        await member.send(embed=embed)
+                        await ctx.send("Le résultat a bien était prit en compte !")
                         # -----------------------------------------------
-                    banned['opponent'][tree['name']] = tree['author']
-                    tree['opponent'][banned['name']] = banned['author']
+                        if load['id_ban'][id1]['score_id1'] < load['id_ban'][id1]['score_id2']:
+                            banned['loose'] += 1
+                            tree['win'] += 1
+                        else:
+                            banned['win'] += 1
+                            tree['loose'] += 1
+                        joueur_trouve = 0
+                        for key in load['players'].keys():
+                            if load[load['players'][key]][key]['win'] == banned['win'] and load[load['players'][key]][key][
+                                'poule'] == banned['poule'] and load[load['players'][key]][key][
+                                'disponible'] == True and key not in banned['opponent']:
+                                opponent = load[load['players'][key]][key]
+                                if opponent['name'] != banned['name']:
+                                    await ctx.send(
+                                        f"Le joueur {banned['name']} <@{banned['id']}> a un nouveau match avec {opponent['name']} <@{opponent['id']}>")
+                                    joueur_trouve = 1
+                                    banned['disponible'] = False
+                                    load[load['players'][key]][key]['disponible'] = False
+                                    banned['current-opponent'] = load[load['players'][key]][key]['author']
+                                    load[load['players'][key]][key]['current-opponent'] = banned['author']
+                        if joueur_trouve == 0:
+                            await ctx.send(
+                                f"Aucun match n'a était trouvé pour {banned['name']} vous êtes donc mis en attente pour "
+                                f"l'instant")
+                            banned['current-opponent'] = "Nobody"
+                        joueur_trouve = 0
+                        for key in load['players'].keys():
+                            if load[load['players'][key]][key]['win'] == tree['win'] and load[load['players'][key]][key][
+                                'poule'] == tree['poule'] and load[load['players'][key]][key][
+                                'disponible'] == True and key not in tree['opponent']:
+                                opponent = load[load['players'][key]][key]
+                                if opponent['name'] != tree['name']:
+                                    await ctx.send(
+                                        f"Le joueur {tree['name']}(<@{tree['id']}>) a un nouveau match avec {opponent['name']}(<@{opponent['id']}>)")
+                                    joueur_trouve = 1
+                                    tree['disponible'] = False
+                                    load[load['players'][key]][key]['disponible'] = False
+                                    tree['current-opponent'] = load[load['players'][key]][key]['author']
+                                    load[load['players'][key]][key]['current-opponent'] = tree['author']
+                        if joueur_trouve == 0:
+                            await ctx.send(
+                                f"Aucun match n'a était trouvé pour {tree['name']} vous êtes donc mis en attente pour "
+                                f"l'instant")
+                            tree['current-opponent'] = "Nobody"
+                            # -----------------------------------------------
+                        banned['opponent'][tree['name']] = tree['author']
+                        tree['opponent'][banned['name']] = banned['author']
+                        del load['id_ban'][id1]
+                    else:
+                        await ctx.send(f"Il faut attendre 60 secondes entre chaque commande result donc vous devez encore "
+                                       f"attendre {round(60 - delta, 1)}")
+                elif arg1 == "n":
+                    load['id_ban_refusal'][id1] = load['id_ban'][id1]
                     del load['id_ban'][id1]
+                    embed = discord.Embed(title="CA TOURNE MAL EXPLICATION !!!!", description="Refus de défaite",
+                                          color=0xff0000)
+                    embed.add_field(name="\0",
+                                    value=f"Refus du résultat du match entre : {banned['name']} et {tree['name']}")
+                    await member.send(embed=embed)
+                    await ctx.send("Le résultat du dernier match a donc était contesté et l'information remontera à un "
+                                   "administrateur pour régler le problème")
                 else:
-                    await ctx.send(f"Il faut attendre 60 secondes entre chaque commande result donc vous devez encore "
-                                   f"attendre {round(60 - delta, 1)}")
-            elif arg1 == "n":
-                load['id_ban_refusal'][id1] = load['id_ban'][id1]
-                del load['id_ban'][id1]
-                embed = discord.Embed(title="CA TOURNE MAL EXPLICATION !!!!", description="Refus de défaite",
-                                      color=0xff0000)
-                embed.add_field(name="\0",
-                                value=f"Refus du résultat du match entre : {banned['name']} et {tree['name']}")
-                await member.send(embed=embed)
-                await ctx.send("Le résultat du dernier match a donc était contesté et l'information remontera à un "
-                               "administrateur pour régler le problème")
+                    await ctx.send("Veuillez saisir un deuxième paramètre parmis les caractères 'y' ou 'n'")
+                tree['cool-down_result'] = datetime.datetime.timestamp(datetime.datetime.now())
+                with open('register.json', "w") as f:
+                    json.dump(load, f, ensure_ascii=False, indent=4)
             else:
-                await ctx.send("Veuillez saisir un deuxième paramètre parmis les caractères 'y' ou 'n'")
-            tree['cool-down_result'] = datetime.datetime.timestamp(datetime.datetime.now())
-            with open('register.json', "w") as f:
-                json.dump(load, f, ensure_ascii=False, indent=4)
+                await ctx.send(f"{tree['author']} vous n'êtiez pas l'adversaire de {member1}")
         else:
-            await ctx.send(f"{tree['author']} n'était pas votre adversaire !")
+            await ctx.send("La personne mentionnée n'a pas donné de résultat récemment")
+        with open('register.json', "w") as f:
+            json.dump(load, f, ensure_ascii=False, indent=4)
     else:
-        await ctx.send("La personne mentionnée n'a pas donné de résultat récemment")
-    with open('register.json', "w") as f:
-        json.dump(load, f, ensure_ascii=False, indent=4)
+        await ctx.send("Veuillez créer un compte avant de faire cette commande")
     print("Commande result_confirm")
 
 
@@ -296,26 +300,34 @@ async def register(ctx, member: discord.Member, arg1, arg2):
     with open('register.json') as load:
         load = json.load(load)
     id_member = str(member.id)
-    if id_member != "803313379992272967" and id_member != "466005935404351488" and id_member != "414476886501228556":
+    if str(ctx.author) != "Mabule#2890" and "oitzyhrr#1141" and "Toooom#2689":
         if id_member not in load['id']:
             if ctx.author == member:
-                if arg2.lower() != "score":
-                    res = add_account(str(ctx.author), arg1, arg2, load, id_member)
+                if arg1.lower() not in cascade_mere:
+                    if arg2.lower() != "score":
+                        res = add_account(str(ctx.author), arg1, arg2, load, id_member)
+                    else:
+                        await ctx.send("Veillez à ne pas donner de nom de ce type ;)")
                 else:
-                    await ctx.send("Veillez à ne pas donner de nom de ce type ;)")
+                    await ctx.send(f"Veillez à ne pas donner un nom de classe parmi {cascade_mere}")
             else:
-                await ctx.send("Mais attends ... Tu essayerais pas de gruger le système pour confirmer toi-même le "
-                               "résultat ?? "
-                               "O_O (je te vois...)")
+                    await ctx.send("Qu'est-ce que tu fous ?? Enregistre le compte pour toi pas pour un autre")
         else:
             await ctx.send("Désolé mais vous ne pouvez pas enregistrer plus de 1 participant")
     else:
-        res = add_account(str(ctx.author), arg1, arg2, load, id_member)
+        if arg1.lower() not in cascade_mere:
+            if arg2.lower() != "score":
+                res = add_account(str(ctx.author), arg1, arg2, load, id_member)
+            else:
+                await ctx.send("Veillez à ne pas donner de nom de ce type ;)")
+        else:
+            await ctx.send(f"Veillez à ne pas donner un nom de classe parmi {cascade_mere}")
     if res == 0:
         await ctx.send(f"Le participant {arg2} de la classe {arg1} est enregistré")
     elif res == 1:
         await ctx.send(f"Une erreur s'est produite car le participant {arg2} pour la classe {arg1} doit déjà exister")
     print("Commande register")
+    print(cascade_mere)
 
 
 @bot.command()
@@ -436,10 +448,11 @@ async def rebuild(ctx):
     if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
         with open('register.json') as load:
             load = json.load(load)
-
+        for list in cascade_mere:
+            load[list] = {}
         with open('register.json', "w") as f:
             json.dump(load, f, ensure_ascii=False, indent=4)
-        await ctx.send("Le fichier a bien été réinitialisé")
+        await ctx.send("Le fichier a bien été rebuild")
     print("Commande rebuild")
 
 
