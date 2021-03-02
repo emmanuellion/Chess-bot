@@ -6,9 +6,10 @@ import datetime
 
 print("La partie va commencer !")
 client = discord.Client()
-token = "ODAxODc4NjAxMDM3MzgxNjYy.YAnFpA.6nlchzJK_wLaAERB0ntsYWWlTKo"
+token = "TOKEN BOT DISCORD"
 bot = commands.Bot(command_prefix="!")
 cascade_mere = ['id', 'id_ban', 'players', 'poule_done', 'id_ban_refusal']
+admin = ["Mabule#2890", "oitzyhrr#1141", "Toooom#2689"]
 
 
 def add_account(ctx, arg1, arg2, load, id_member):
@@ -302,7 +303,7 @@ async def register(ctx, member: discord.Member, arg1, arg2):
     with open('register.json') as load:
         load = json.load(load)
     id_member = str(member.id)
-    if str(ctx.author) != "Mabule#2890" and "oitzyhrr#1141" and "Toooom#2689":
+    if str(ctx.author) not in admin:
         if id_member not in load['id']:
             if ctx.author == member:
                 if arg1.lower() not in cascade_mere:
@@ -332,9 +333,9 @@ async def register(ctx, member: discord.Member, arg1, arg2):
     print(cascade_mere)
 
 
-@bot.command()
+@bot.command()  # admin command
 async def modif_class(ctx, arg3):
-    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+    if str(ctx.author) in admin:
         with open('register.json') as load:
             load = json.load(load)
         arg1, arg2, tree = search(ctx, load)
@@ -359,9 +360,9 @@ async def modif_class(ctx, arg3):
     print("Commande modif_class")
 
 
-@bot.command()
+@bot.command()  # admin command
 async def modif_player(ctx, arg3):
-    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+    if str(ctx.author) in admin:
         with open('register.json') as load:
             load = json.load(load)
         arg1, arg2, tree = search(ctx, load)
@@ -383,18 +384,18 @@ async def modif_player(ctx, arg3):
     print("Commande modif_player")
 
 
-@bot.command()
+@bot.command()  # admin command
 async def admin(ctx):
-    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+    if str(ctx.author) in admin:
         with open('register.json') as load:
             load = json.load(load)
         await ctx.send(load)
     print("Commande admin")
 
 
-@bot.command()
+@bot.command()  # admin command
 async def list_player(ctx):
-    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+    if str(ctx.author) in admin:
         with open('register.json') as load:
             load = json.load(load)
         embed = discord.Embed(title="Liste des joueurs et de leur classe", description="", color=0x9400D3)
@@ -405,9 +406,9 @@ async def list_player(ctx):
     print("Commande list_player")
 
 
-@bot.command()
+@bot.command()  # admin command
 async def delete_class(ctx, arg):
-    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+    if str(ctx.author) in admin:
         with open('register.json') as load:
             load = json.load(load)
         if arg.lower() in load:
@@ -432,9 +433,9 @@ async def delete_class(ctx, arg):
     print("Commande delete_class")
 
 
-@bot.command()
+@bot.command()  # admin command
 async def delete_player(ctx, arg1, arg2):
-    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+    if str(ctx.author) in admin:
         with open('register.json') as load:
             load = json.load(load)
             if arg1.lower() in load:
@@ -458,9 +459,9 @@ async def delete_player(ctx, arg1, arg2):
     print("Commande delete_player")
 
 
-@bot.command()
+@bot.command()  # admin command
 async def reset(ctx):
-    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+    if str(ctx.author) in admin:
         with open('register.json') as load:
             load = json.load(load)
         for key in list(load.keys()):
@@ -471,9 +472,9 @@ async def reset(ctx):
     print("Commande reset")
 
 
-@bot.command()
+@bot.command()  # admin command
 async def rebuild(ctx):
-    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+    if str(ctx.author) in admin:
         with open('register.json') as load:
             load = json.load(load)
         for list in cascade_mere:
@@ -484,9 +485,9 @@ async def rebuild(ctx):
     print("Commande rebuild")
 
 
-@bot.command()
+@bot.command()  # admin command
 async def poule(ctx):
-    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+    if str(ctx.author)in admin:
         with open('register.json') as load:
             load = json.load(load)
         all_player_list = []
