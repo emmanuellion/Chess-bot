@@ -5,20 +5,22 @@ See more of the bot on [this link](https://mabule.github.io/chess.com/index.html
 The prefix for commands is "!"
 
 Commands are :
-*_help
-*result
-*result_confirm
-*score_player
-*score_class
-*register
-*modif_class
-*modif_player
-*admin
-*list_player
-*delete_class
-*delete_player
-*reset
-*rebuild
-*poule
-*edit_color_profil
-*show_profil
+<ul>
+  <li>_help</li>
+  <li>result</li>
+  <li>result_confirm</li>
+  <li>score_player</li>
+  <li>score_class</li>
+  <li>register</li>
+  <li>modif_class</li>
+  <li>modif_player</li>
+  <li>admin</li>
+  <li>list_player</li>
+  <li>delete_class</li>
+  <li>delete_player</li>
+  <li>reset</li>
+  <li>rebuild</li>
+  <li>poule</li>
+  <li>edit_color_profil</li>
+  <li>show_profil</li>
+</ul>
