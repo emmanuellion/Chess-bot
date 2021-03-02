@@ -6,7 +6,7 @@ import datetime
 
 print("La partie va commencer !")
 client = discord.Client()
-#token = "TOKEN BOT DISCORD"
+token = "TOKEN BOT DISCORD"
 bot = commands.Bot(command_prefix="!")
 cascade_mere = ['id', 'id_ban', 'players', 'poule_done', 'id_ban_refusal']
 
