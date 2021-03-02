@@ -6,7 +6,7 @@ import datetime
 
 print("La partie va commencer !")
 client = discord.Client()
-token = "TOKEN BOT DISCORD"
+token = "ODAxODc4NjAxMDM3MzgxNjYy.YAnFpA.6nlchzJK_wLaAERB0ntsYWWlTKo"
 bot = commands.Bot(command_prefix="!")
 cascade_mere = ['id', 'id_ban', 'players', 'poule_done', 'id_ban_refusal']
 
@@ -98,12 +98,12 @@ async def on_ready():
         load['id_ban_refusal'] = {}
     with open('register.json', "w") as f:
         json.dump(load, f, ensure_ascii=False, indent=4)
-    for i in range(0, 9):
-        add_account("Mabule#2890", "classe_1", f"j_{i}", load, 414476886501228556)
-    for i in range(9, 16):
-        add_account("Mabule#2890", "classe_2", f"j_{i}", load, 414476886501228556)
-    with open('register.json', "w") as f:
-        json.dump(load, f, ensure_ascii=False, indent=4)
+    #for i in range(0, 9):
+    #    add_account("Mabule#2890", "classe_1", f"j_{i}", load, 414476886501228556)
+    #for i in range(9, 16):
+    #    add_account("Mabule#2890", "classe_2", f"j_{i}", load, 414476886501228556)
+    #with open('register.json', "w") as f:
+    #    json.dump(load, f, ensure_ascii=False, indent=4)
     await bot.change_presence(status=discord.Status.online, activity=discord.Game("Joue aux échecs"))
     print("La partie commence ...")
 
@@ -271,6 +271,8 @@ async def score_player(ctx, arg1, arg2):
         if arg2.lower() in load[arg1.lower()]:
             embed = discord.Embed(title="Score de " + arg2, description="",
                                   color=int(load[arg1.lower()][arg2.lower()]['color'], 16))
+            embed.add_field(name="Victoire : ", value=load[arg1.lower()][arg2.lower()]['win'], inline=False)
+            embed.add_field(name="Défaite : ", value=load[arg1.lower][arg2.lower()]['loose'], inline=False)
             embed.add_field(name="Score : ", value=f"**{str(load[arg1.lower()][arg2.lower()]['score'])}**",
                             inline=False)
             await ctx.send(embed=embed)
@@ -428,6 +430,32 @@ async def delete_class(ctx, arg):
         else:
             await ctx.send("La classe renseignée n'existe pas ¯\_(ツ)_/¯")
     print("Commande delete_class")
+
+
+@bot.command()
+async def delete_player(ctx, arg1, arg2):
+    if str(ctx.author) == "Mabule#2890" or "oitzyhrr#1141" or "Toooom#2689":
+        with open('register.json') as load:
+            load = json.load(load)
+            if arg1.lower() in load:
+                if arg2.lower() in load[arg1.lower()]:
+                    player = load[arg1.lower()][arg2.lower()]
+                    load[arg1.lower()]['score'] -= player['score']
+                    del load['players'][arg2.lower()]
+                    if arg2.lower() in load['poule_done']:
+                        del load['poule_done'][arg2.lower()]
+                    if player['id'] in load['id_ban']:
+                        del load['id_ban'][player['id']]
+                    del load['id'][player['id']]
+                    del load[arg1.lower()][arg2.lower()]
+                    await ctx.send(f"Le joueur {arg2.lower()} a bien été éffacé")
+                else:
+                    await ctx.send(f"Le joueur montionné n'a pas été trouvé dans la classe {arg1.lower()}")
+            else:
+                await ctx.send("La classe mentionnée n'existe pas")
+        with open('register.json', "w") as f:
+            json.dump(load, f, ensure_ascii=False, indent=4)
+    print("Commande delete_player")
 
 
 @bot.command()
