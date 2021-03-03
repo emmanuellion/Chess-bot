@@ -6,10 +6,11 @@ import datetime
 
 print("La partie va commencer !")
 client = discord.Client()
-token = "TOKEN BOT DISCORD"
+token = "ODAxODc4NjAxMDM3MzgxNjYy.YAnFpA.IV-2pKB6JY2DcHhNF6rkY35PWGE"
 bot = commands.Bot(command_prefix="!")
-cascade_mere = ['id', 'id_ban', 'players', 'poule_done', 'id_ban_refusal']
+cascade_mere = ['id', 'id_ban', 'players', 'poule_done', 'id_ban_refusal', 'sondage']
 admins = ["Mabule#2890", "oitzyhrr#1141", "Toooom#2689"]
+all_class = ["mpsi1", "mpsi2", "mpsi3", "pcsi1", "pcsi2"]
 
 
 def add_account(ctx, arg1, arg2, load, id_member):
@@ -53,38 +54,41 @@ def search(ctx, load):
     return str(classe), str(player), tree
 
 
-def next_match(load, banned, tree):
-    joueur_trouve_banned = 0
+def next_match(load, banned, tree, id1):
+    joueur_trouve = 0
+    opponent = {}
+    if load['id_ban'][id1]['score_id1'] > load['id_ban'][id1]['score_id2']:
+        banned['win'] += 1
+        tree['loose'] += 1
+        winner = 1
+    else:
+        banned['loose'] += 1
+        tree['win'] += 1
+        winner = -1
+    if winner == 1:
+        player = banned
+        looser = tree
+    else:
+        player = tree
+        looser = banned
     for key in load['players'].keys():
-        if load[load['players'][key]][key]['win'] == banned['win'] and load[load['players'][key]][key][
-            'poule'] == banned['poule'] and load[load['players'][key]][key][
-            'disponible'] == True and key not in banned['opponent']:
-            opponent_banned = load[load['players'][key]][key]
-            if opponent_banned['name'] != banned['name']:
-                joueur_trouve_banned = 1
-                banned['disponible'] = False
+        if load[load['players'][key]][key]['win'] == player['win'] and load[load['players'][key]][key][
+            'poule'] == player['poule'] and load[load['players'][key]][key]['disponible'] is True:
+            opponent = load[load['players'][key]][key]
+            if opponent['name'] != player['name']:
+                joueur_trouve = 1
+                player['disponible'] = False
                 load[load['players'][key]][key]['disponible'] = False
-                banned['current-opponent'] = load[load['players'][key]][key]['author']
-                load[load['players'][key]][key]['current-opponent'] = banned['author']
+                player['current-opponent'] = load[load['players'][key]][key]['author']
+                load[load['players'][key]][key]['current-opponent'] = player['author']
                 break
-    if joueur_trouve_banned == 0:
-        banned['current-opponent'] = "Nobody"
-    joueur_trouve_tree = 0
-    for key in load['players'].keys():
-        if load[load['players'][key]][key]['win'] == tree['win'] and load[load['players'][key]][key][
-            'poule'] == tree['poule'] and load[load['players'][key]][key][
-            'disponible'] == True and key not in tree['opponent']:
-            opponent_tree = load[load['players'][key]][key]
-            if opponent_tree['name'] != tree['name']:
-                joueur_trouve_tree = 1
-                tree['disponible'] = False
-                load[load['players'][key]][key]['disponible'] = False
-                tree['current-opponent'] = load[load['players'][key]][key]['author']
-                load[load['players'][key]][key]['current-opponent'] = tree['author']
-                break
-    if joueur_trouve_tree == 0:
-        tree['current-opponent'] = "Nobody"
-    return joueur_trouve_banned, joueur_trouve_tree, opponent_banned, opponent_tree
+    if joueur_trouve == 0:
+        player['current-opponent'] = "Nobody"
+        player['disponible'] = True
+    looser['disponible'] = False
+    looser['cool-down_result'] = 9999999999
+    looser['cool-down_confirm'] = 9999999999
+    return joueur_trouve, player, looser, opponent, winner
 
 
 @bot.event
@@ -131,14 +135,18 @@ async def on_ready():
         print(load['id_ban_refusal'])
     except KeyError:
         load['id_ban_refusal'] = {}
+    try:
+        print(load['sondage'])
+    except KeyError:
+        load['sondage'] = {}
     with open('register.json', "w") as f:
         json.dump(load, f, ensure_ascii=False, indent=4)
-    #for i in range(0, 9):
-    #    add_account("Mabule#2890", "classe_1", f"j_{i}", load, 414476886501228556)
-    #for i in range(9, 16):
-    #    add_account("Mabule#2890", "classe_2", f"j_{i}", load, 414476886501228556)
-    #with open('register.json', "w") as f:
-    #    json.dump(load, f, ensure_ascii=False, indent=4)
+    for i in range(0, 9):
+        add_account("Mabule#2890", "classe_1", f"j_{i}", load, 414476886501228556)
+    for i in range(9, 16):
+        add_account("Mabule#2890", "classe_2", f"j_{i}", load, 414476886501228556)
+    with open('register.json', "w") as f:
+        json.dump(load, f, ensure_ascii=False, indent=4)
     await bot.change_presence(status=discord.Status.online, activity=discord.Game("Joue aux échecs"))
     print("La partie commence ...")
 
@@ -182,7 +190,7 @@ async def result(ctx, arg3, arg4, arg5, arg6):
                         json.dump(load, f, ensure_ascii=False, indent=4)
                 else:
                     await ctx.send(f"Il faut attendre 60 secondes entre chaque commande result donc vous devez encore "
-                                   f"attendre {round(60 - delta, 1)}")
+                                   f"attendre {round(60 - delta, 1)} secondes")
             else:
                 await ctx.send("Le prénom du joueur 2 n'a pas était trouvé dans la classe donnée")
         else:
@@ -215,28 +223,18 @@ async def result_confirm(ctx, member: discord.Member, member1: discord.Member, a
                         tree['score'] += float(load['id_ban'][id1]['score_id2'])
                         load[load['id_ban'][id1]['class_banned']]['score'] += float(load['id_ban'][id1]['score_id1'])
                         load[load['id_ban'][id1]['class_confirm']]['score'] += float(load['id_ban'][id1]['score_id2'])
-                        if load['id_ban'][id1]['score_id1'] < load['id_ban'][id1]['score_id2']:
-                            banned['loose'] += 1
-                            tree['win'] += 1
-                        else:
-                            banned['win'] += 1
-                            tree['loose'] += 1
                         embed = discord.Embed(title="VICTORY", description="", color=0x00ff00)
                         embed.add_field(name="\0",
                                         value=f"Résultat du match entre {member1} et {tree['author']} a été approuvé")
                         await member.send(embed=embed)
                         await ctx.send("Le résultat a bien était prit en compte !")
-                        joueur_trouve_banned, joueur_trouve_tree, opponent_banned, opponent_tree = next_match(load, banned, tree)
-                        if joueur_trouve_banned == 1:
-                            await ctx.send(f"Le joueur {banned['name']} <@{banned['id']}> a un nouveau match avec {opponent_banned['name']} <@{opponent_banned['id']}>")
+                        joueur_trouve, player, looser, opponent, winner = next_match(load, banned, tree, id1)
+                        if joueur_trouve == 1:
+                            await ctx.send(f"Le joueur {player['name']} <@{player['id']}> a un nouveau match avec {opponent['name']} <@{opponent['id']}>")
                         else:
-                            await ctx.send(f"Aucun match n'a était trouvé pour {banned['name']} vous êtes donc mis en attente pour "
+                            await ctx.send(f"Aucun match n'a était trouvé pour {player['name']} vous êtes donc mis en attente pour "
                                             "l'instant")
-                        if joueur_trouve_tree == 1:
-                            await ctx.send(f"Le joueur {tree['name']}(<@{tree['id']}>) a un nouveau match avec {opponent_tree['name']}(<@{opponent_tree['id']}>)")
-                        else:
-                            await ctx.send(f"Aucun match n'a était trouvé pour {tree['name']} vous êtes donc mis en attente pour "
-                                            "l'instant")
+                        await ctx.send(f"Désolé à toi {looser['name']} mais tu es éliminé du tournoi !")
                         banned['opponent'][tree['name']] = tree['author']
                         tree['opponent'][banned['name']] = banned['author']
                         del load['id_ban'][id1]
@@ -290,24 +288,18 @@ async def confirm_refusal(ctx, member: discord.Member, arg):
                     banned['win'] += 1
                     tree['loose'] += 1
                 await ctx.send("Le résultat a bien été prit en compte")
-                joueur_trouve_banned, joueur_trouve_tree, opponent_banned, opponent_tree = next_match(load, banned, tree)
-                if joueur_trouve_banned == 1:
+                joueur_trouve, player, looser, opponent, winner = next_match(load, banned, tree, id1)
+                if joueur_trouve == 1:
                     await ctx.send(
-                        f"Le joueur {banned['name']} <@{banned['id']}> a un nouveau match avec {opponent_banned['name']} <@{opponent_banned['id']}>")
+                        f"Le joueur {player['name']} <@{player['id']}> a un nouveau match avec {opponent['name']} <@{opponent['id']}>")
                 else:
                     await ctx.send(
-                        f"Aucun match n'a était trouvé pour {banned['name']} vous êtes donc mis en attente pour "
+                        f"Aucun match n'a était trouvé pour {player['name']} vous êtes donc mis en attente pour "
                         "l'instant")
-                if joueur_trouve_tree == 1:
-                    await ctx.send(
-                        f"Le joueur {tree['name']}(<@{tree['id']}>) a un nouveau match avec {opponent_tree['name']}(<@{opponent_tree['id']}>)")
-                else:
-                    await ctx.send(
-                        f"Aucun match n'a était trouvé pour {tree['name']} vous êtes donc mis en attente pour "
-                        "l'instant")
+                await ctx.send(f"Désolé à toi {looser['name']} mais tu es éliminé du tournoi !")
                 banned['opponent'][tree['name']] = tree['author']
                 tree['opponent'][banned['name']] = banned['author']
-                del load['id_ban_refusal'][id1]
+                del load['id_ban'][id1]
             else:
                 await ctx.send("Aucun match n'a été déposé pour ce joueur")
         else:
@@ -325,7 +317,7 @@ async def score_player(ctx, arg1, arg2):
             embed = discord.Embed(title="Score de " + arg2, description="",
                                   color=int(load[arg1.lower()][arg2.lower()]['color'], 16))
             embed.add_field(name="Victoire : ", value=load[arg1.lower()][arg2.lower()]['win'], inline=False)
-            embed.add_field(name="Défaite : ", value=load[arg1.lower][arg2.lower()]['loose'], inline=False)
+            embed.add_field(name="Défaite : ", value=load[arg1.lower()][arg2.lower()]['loose'], inline=False)
             embed.add_field(name="Score : ", value=f"**{str(load[arg1.lower()][arg2.lower()]['score'])}**",
                             inline=False)
             await ctx.send(embed=embed)
@@ -366,7 +358,7 @@ async def register(ctx, member: discord.Member, arg1, arg2):
                 else:
                     await ctx.send(f"Veillez à ne pas donner un nom de classe parmi {cascade_mere}")
             else:
-                    await ctx.send("Qu'est-ce que tu fous ?? Enregistre le compte pour toi pas pour un autre")
+                await ctx.send("Qu'est-ce que tu fous ?? Enregistre le compte pour toi pas pour un autre")
         else:
             await ctx.send("Désolé mais vous ne pouvez pas enregistrer plus de 1 participant")
     else:
@@ -529,8 +521,8 @@ async def rebuild(ctx):
     if str(ctx.author) in admins:
         with open('register.json') as load:
             load = json.load(load)
-        for list in cascade_mere:
-            load[list] = {}
+        for liste in cascade_mere:
+            load[liste] = {}
         with open('register.json', "w") as f:
             json.dump(load, f, ensure_ascii=False, indent=4)
         await ctx.send("Le fichier a bien été rebuild")
@@ -609,6 +601,82 @@ async def show_profil(ctx):
     else:
         await ctx.send("Vous ne vous êtes pas enregistré en tant que joueur")
     print("Commande show_profil")
+
+
+@bot.command()  # admin command
+async def create_sondage(ctx, quest, poss1, poss2):
+    if str(ctx.author) in admins:
+        with open('register.json') as load:
+            load = json.load(load)
+        id_sondage = 1
+        while str(id_sondage) in load['sondage']:
+            id_sondage += 1
+        load['sondage'][id_sondage] = {'question': quest, 'answer1': poss1, 'answer2': poss2, 'nb_vote': 0, 'voter': {}, 'nb_answer1': 0, 'nb_answer2': 0}
+        embed = discord.Embed(title=f"Sondage n°{id_sondage}", description=f"{quest}", color=0x6F00F6)
+        embed.add_field(name="Choix 1 :", value=poss1, inline=False)
+        embed.add_field(name="Choix 2 :", value=poss2, inline=False)
+        await ctx.send(embed=embed)
+        with open('register.json', "w") as f:
+            json.dump(load, f, ensure_ascii=False, indent=4)
+    print("Commande create_sondage")
+
+
+@bot.command()
+async def answer_sondage(ctx, id_sondage, choice):
+    with open('register.json') as load:
+        load = json.load(load)
+    if id_sondage in load['sondage']:
+        sondage = load['sondage'][id_sondage]
+        if str(ctx.author) not in sondage['voter']:
+            if str(choice) == sondage['answer1'] or sondage['answer2']:
+                sondage['nb_vote'] += 1
+                sondage['voter'][str(ctx.author)] = str(ctx.author)
+                if str(choice) == sondage['answer1']:
+                    sondage['answer1'] += 1
+                else:
+                    sondage['answer2'] += 1
+                await ctx.send("Votre vote a bien été pris en compte")
+                with open('register.json', "w") as f:
+                    json.dump(load, f, ensure_ascii=False, indent=4)
+            else:
+                await ctx.send("Veuillez saisir une réponse valide")
+        else:
+            await ctx.send("Vous ne pouvez pas voter plus d'une fois")
+    else:
+        await ctx.send(f"L'id du message n'existe pas actuellement voici l'id des sondages existant : {load['sondage'].keys()}")
+    print("Commande answer_sondage")
+
+
+@bot.command()  # admin command
+async def result_sondage(ctx, id_sondage):
+    if str(ctx.author) in admins:
+        with open('register.json') as load:
+            load = json.load(load)
+        if id_sondage in load['sondage']:
+            sondage = load['sondage'][id_sondage]
+            embed = discord.Embed(title=f"Résultat du sondage n°{id_sondage}", description='', color=0x6F00F6)
+            embed.add_field(name="Nombre de votant total :", value=sondage['nb_vote'], inline=False)
+            embed.add_field(name=f"Nombre de vote pour '{sondage['answer1']}' :", value=sondage['nb_answer1'], inline=False)
+            embed.add_field(name=f"Nombre de vote pour '{sondage['answer2']}' :", value=sondage['nb_answer2'], inline=False)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send(f"L'id du message n'existe pas actuellement voici l'id des sondages existant : {load['sondage'].keys()}")
+    print("Commande result_sondage")
+
+
+@bot.command()  # admin command
+async def delete_sondage(ctx, id_sondage):
+    if str(ctx.author) in admins:
+        with open('register.json') as load:
+            load = json.load(load)
+        if id_sondage in load['sondage']:
+            del load['sondage'][id_sondage]
+            await ctx.send(f"Le sondage n°{id_sondage} a bien été éffacé")
+            with open('register.json', "w") as f:
+                json.dump(load, f, ensure_ascii=False, indent=4)
+        else:
+            await ctx.send(f"L'id du message n'existe pas actuellement voici l'id des sondages existant : {load['sondage'].keys()}")
+    print("Commande delete_sondage")
 
 
 bot.run(token)
