@@ -3,6 +3,7 @@ from discord.ext import commands
 import json
 import random
 import datetime
+import time
 
 print("La partie va commencer !")
 client = discord.Client()
@@ -170,27 +171,33 @@ async def result(ctx, arg3, arg4, arg5, arg6):
     if tree is not None:
         if arg4.lower() in load:
             if arg5.lower() in load[arg4.lower()]:
-                delta = datetime.datetime.timestamp(datetime.datetime.now()) - tree['cool-down_result']
-                if delta >= 60:
-                    id1 = str(tree['id'])
-                    id2 = str(load[arg4.lower()][arg5.lower()]['id'])
-                    if id1 not in load['id_ban']:
-                        load['id_ban'][id1] = id1
-                        load['id_ban'][id1] = {"banned": id1, "class_banned": arg1.lower(), "name_banned": arg2.lower(),
-                                               "to_confirm": id2, "class_confirm": arg4.lower(),
-                                               "name_confirm": arg5.lower(), "score_id1": float(arg3),
-                                               "score_id2": float(arg6)}
-                        await ctx.send("Le résultat du match a bien était enregistré\nEn attente de la commande "
-                                       f"`!match_result_confirm` de la part du second joueur (<@{load[arg4.lower()][arg5.lower()]['id']}>)...")
+                if load[arg4.lower()][arg5.lower()]['author'] == tree['current-opponent']:
+                    delta = datetime.datetime.timestamp(datetime.datetime.now()) - tree['cool-down_result']
+                    if delta >= 60:
+                        if tree['current-opponent'] != "Nobody":
+                            id1 = str(tree['id'])
+                            id2 = str(load[arg4.lower()][arg5.lower()]['id'])
+                            if id1 not in load['id_ban']:
+                                load['id_ban'][id1] = id1
+                                load['id_ban'][id1] = {"banned": id1, "class_banned": arg1.lower(), "name_banned": arg2.lower(),
+                                                       "to_confirm": id2, "class_confirm": arg4.lower(),
+                                                       "name_confirm": arg5.lower(), "score_id1": float(arg3),
+                                                       "score_id2": float(arg6)}
+                                await ctx.send("Le résultat du match a bien était enregistré\nEn attente de la commande "
+                                               f"`!match_result_confirm` de la part du second joueur (<@{load[arg4.lower()][arg5.lower()]['id']}>)...")
+                            else:
+                                await ctx.send("Vous ne pouvez pas envoyer plus de résultat car le dernier n'a toujours pas "
+                                               "était confirmé")
+                            tree['cool-down_result'] = datetime.datetime.timestamp(datetime.datetime.now())
+                            with open('register.json', "w") as f:
+                                json.dump(load, f, ensure_ascii=False, indent=4)
+                        else:
+                            await ctx.send("Vous ne pouvez pas déposer de résultat car vous n'avez pas d'adversaire")
                     else:
-                        await ctx.send("Vous ne pouvez pas envoyer plus de résultat car le dernier n'a toujours pas "
-                                       "était confirmé")
-                    tree['cool-down_result'] = datetime.datetime.timestamp(datetime.datetime.now())
-                    with open('register.json', "w") as f:
-                        json.dump(load, f, ensure_ascii=False, indent=4)
+                        await ctx.send(f"Il faut attendre 60 secondes entre chaque commande result donc vous devez encore "
+                                       f"attendre {round(60 - delta, 1)} secondes")
                 else:
-                    await ctx.send(f"Il faut attendre 60 secondes entre chaque commande result donc vous devez encore "
-                                   f"attendre {round(60 - delta, 1)} secondes")
+                    await ctx.send(f"{load[arg4.lower()][arg5.lower()]['name']} n'est pas votre adversaire")
             else:
                 await ctx.send("Le prénom du joueur 2 n'a pas était trouvé dans la classe donnée")
         else:
@@ -351,10 +358,13 @@ async def register(ctx, member: discord.Member, arg1, arg2):
         if id_member not in load['id']:
             if ctx.author == member:
                 if arg1.lower() not in cascade_mere:
-                    if arg2.lower() != "score":
-                        res = add_account(str(ctx.author), arg1, arg2, load, id_member)
+                    if arg1.lower() in all_class:
+                        if arg2.lower() != "score":
+                            res = add_account(str(ctx.author), arg1, arg2, load, id_member)
+                        else:
+                            await ctx.send("Veillez à ne pas donner de nom de ce type ;)")
                     else:
-                        await ctx.send("Veillez à ne pas donner de nom de ce type ;)")
+                        await ctx.send(f"Veuillez saisir une classe parmi la liste suivante : {all_class}")
                 else:
                     await ctx.send(f"Veillez à ne pas donner un nom de classe parmi {cascade_mere}")
             else:
@@ -363,10 +373,13 @@ async def register(ctx, member: discord.Member, arg1, arg2):
             await ctx.send("Désolé mais vous ne pouvez pas enregistrer plus de 1 participant")
     else:
         if arg1.lower() not in cascade_mere:
-            if arg2.lower() != "score":
-                res = add_account(str(ctx.author), arg1, arg2, load, id_member)
+            if arg1.lower() in all_class:
+                if arg2.lower() != "score":
+                    res = add_account(str(ctx.author), arg1, arg2, load, id_member)
+                else:
+                    await ctx.send("Veillez à ne pas donner de nom de ce type ;)")
             else:
-                await ctx.send("Veillez à ne pas donner de nom de ce type ;)")
+                await ctx.send(f"Veuillez saisir une classe parmi la liste suivante : {all_class}")
         else:
             await ctx.send(f"Veillez à ne pas donner un nom de classe parmi {cascade_mere}")
     if res == 0:
@@ -625,25 +638,32 @@ async def create_sondage(ctx, quest, poss1, poss2):
 async def answer_sondage(ctx, id_sondage, choice):
     with open('register.json') as load:
         load = json.load(load)
-    if id_sondage in load['sondage']:
-        sondage = load['sondage'][id_sondage]
-        if str(ctx.author) not in sondage['voter']:
-            if str(choice) == sondage['answer1'] or sondage['answer2']:
-                sondage['nb_vote'] += 1
-                sondage['voter'][str(ctx.author)] = str(ctx.author)
-                if str(choice) == sondage['answer1']:
-                    sondage['answer1'] += 1
+    trash, trash, tree = search(ctx, load)
+    if tree is not None:
+        if id_sondage in load['sondage']:
+            sondage = load['sondage'][id_sondage]
+            if str(ctx.author) not in sondage['voter']:
+                if str(choice) == sondage['answer1'] or sondage['answer2']:
+                    sondage['nb_vote'] += 1
+                    sondage['voter'][str(ctx.author)] = str(ctx.author)
+                    if str(choice) == sondage['answer1']:
+                        sondage['nb_answer1'] += 1
+                    else:
+                        sondage['nb_answer2'] += 1
+                    await ctx.send("Votre vote a bien été pris en compte")
+                    with open('register.json', "w") as f:
+                        json.dump(load, f, ensure_ascii=False, indent=4)
+                    #await ctx.message.delete()
+                    time.sleep(3)
+                    await ctx.channel.purge(limit=2)
                 else:
-                    sondage['answer2'] += 1
-                await ctx.send("Votre vote a bien été pris en compte")
-                with open('register.json', "w") as f:
-                    json.dump(load, f, ensure_ascii=False, indent=4)
+                    await ctx.send("Veuillez saisir une réponse valide")
             else:
-                await ctx.send("Veuillez saisir une réponse valide")
+                await ctx.send("Vous ne pouvez pas voter plus d'une fois")
         else:
-            await ctx.send("Vous ne pouvez pas voter plus d'une fois")
+            await ctx.send(f"L'id du message n'existe pas actuellement voici l'id des sondages existant : {load['sondage'].keys()}")
     else:
-        await ctx.send(f"L'id du message n'existe pas actuellement voici l'id des sondages existant : {load['sondage'].keys()}")
+        await ctx.send("Vous ne vous êtes pas enregistré en tant que joueur")
     print("Commande answer_sondage")
 
 
@@ -677,6 +697,16 @@ async def delete_sondage(ctx, id_sondage):
         else:
             await ctx.send(f"L'id du message n'existe pas actuellement voici l'id des sondages existant : {load['sondage'].keys()}")
     print("Commande delete_sondage")
+
+
+@bot.command()  # admin command
+async def clear(ctx, nb_mess):
+    if str(ctx.author) in admins:
+        try:
+            await ctx.channel.purge(limit=int(nb_mess)+1)
+        except ValueError:
+            await ctx.send("Veuillez saisir un nombre")
+    print("Commande clear")
 
 
 bot.run(token)
