@@ -93,6 +93,12 @@ def next_match(load, banned, tree, id1):
     return joueur_trouve, player, looser, opponent, winner
 
 
+def build(load):
+    for liste in cascade_mere:
+        load[liste] = {}
+    return load
+
+
 @bot.event
 async def on_ready():
     try:
@@ -101,6 +107,7 @@ async def on_ready():
     except FileNotFoundError:
         open('register.json', 'w')
         load = {}
+        load = build(load)
     for classe_mere in cascade_mere:
         if classe_mere != 'id' and 'players' and 'poule_done' and load[classe_mere] == {}:
                 load[classe_mere] = {}
@@ -513,8 +520,7 @@ async def restart(ctx):
             load = json.load(load)
         for key in list(load):
             del load[key]
-        for liste in cascade_mere:
-            load[liste] = {}
+        load = build(load)
         with open('register.json', "w") as f:
             json.dump(load, f, ensure_ascii=False, indent=4)
         await ctx.send("Le fichier a bien été réinitialisé")
