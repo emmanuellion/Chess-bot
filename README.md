@@ -9,6 +9,7 @@ Commands are :
   <li>_help</li>
   <li>result</li>
   <li>result_confirm</li>
+  <li>confirm_refusal</li>
   <li>score_player</li>
   <li>score_class</li>
   <li>register</li>
@@ -23,4 +24,9 @@ Commands are :
   <li>poule</li>
   <li>edit_color_profil</li>
   <li>show_profil</li>
+  <li>create_sondage</li>
+  <li>answer_sondage</li>
+  <li>result_sondage</li>
+  <li>delete_sondage</li>
+  <li>clear</li>
 </ul>
