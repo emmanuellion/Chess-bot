@@ -327,24 +327,24 @@ async def confirm_refusal(ctx, member: discord.Member, arg):
     print("Commande confirm_refusal")
 
 
-@bot.command()
-async def score_player(ctx, arg1, arg2):
-    with open('register.json') as f:
-        load = json.load(f)
-    if arg1.lower() in load:
-        if arg2.lower() in load[arg1.lower()]:
-            embed = discord.Embed(title="Score de " + arg2.lower(), description="",
-                                  color=int(load[arg1.lower()][arg2.lower()]['color'], 16))
-            embed.add_field(name="Victoire : ", value=load[arg1.lower()][arg2.lower()]['win'], inline=False)
-            embed.add_field(name="Défaite : ", value=load[arg1.lower()][arg2.lower()]['loose'], inline=False)
-            embed.add_field(name="Score : ", value=load[arg1.lower()][arg2.lower()]['score'],
-                            inline=False)
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send("Aucun joueur de ce nom n'a été trouvé dans cette classe")
-    else:
-        await ctx.send("Veuillez saisir une classe existante")
-    print("Commande score_player")
+#@bot.command()
+#async def score_player(ctx, arg1, arg2):
+#    with open('register.json') as f:
+#        load = json.load(f)
+#    if arg1.lower() in load:
+#       if arg2.lower() in load[arg1.lower()]:
+#            embed = discord.Embed(title="Score de " + arg2.lower(), description="",
+#                                  color=int(load[arg1.lower()][arg2.lower()]['color'], 16))
+#            embed.add_field(name="Victoire : ", value=load[arg1.lower()][arg2.lower()]['win'], inline=False)
+#           embed.add_field(name="Défaite : ", value=load[arg1.lower()][arg2.lower()]['loose'], inline=False)
+#            embed.add_field(name="Score : ", value=load[arg1.lower()][arg2.lower()]['score'],
+#                            inline=False)
+#            await ctx.send(embed=embed)
+#        else:
+#            await ctx.send("Aucun joueur de ce nom n'a été trouvé dans cette classe")
+#    else:
+#        await ctx.send("Veuillez saisir une classe existante")
+#    print("Commande score_player")
 
 
 @bot.command()
@@ -545,12 +545,10 @@ async def restart(ctx):
         load = build(load)
         with open('register.json', "w") as f:
             json.dump(load, f, ensure_ascii=False, indent=4)
-        for i in range(0, 9):
-            add_account(f"{i}", "classe_1", f"j_{i}", load, 414476886501228556)
-        for i in range(9, 16):
-            add_account(f"{i}", "classe_2", f"j_{i}", load, 414476886501228556)
-        with open('register.json', "w") as f:
-            json.dump(load, f, ensure_ascii=False, indent=4)
+        for i in range(0, 8):
+            add_account("Mabule#2890", "classe_1", f"j_{i}", load, 414476886501228556)
+        for i in range(8, 16):
+            add_account("Toooom#2689", "classe_2", f"j_{i}", load, 414476886501228556)
         await ctx.send("Le fichier a bien été réinitialisé")
     print("Commande reset")
 
@@ -574,10 +572,14 @@ async def edit_color_profil(ctx, arg3):
 
 
 @bot.command()
-async def show_profil(ctx):
+async def show_profil(ctx, member: discord.Member = None):
     with open('register.json') as load:
         load = json.load(load)
-    arg1, arg2, player = search(ctx, load)
+    if member is not None:
+        ctx.author = member
+        arg1, arg2, player = search(ctx, load)
+    else:
+        arg1, arg2, player = search(ctx, load)
     if player is not None:
         embed = discord.Embed(title=f"Profil du joueur {arg2}", description="", color=int(player['color'], 16))
         embed.add_field(name="Classe", value=arg1, inline=False)
@@ -687,7 +689,7 @@ async def delete_sondage(ctx, id_sondage):
 
 
 @bot.command()  # admin command
-async def clear(ctx, nb_mess):
+async def clear(ctx, nb_mess=1):
     if str(ctx.author) in admins:
         try:
             await ctx.channel.purge(limit=int(nb_mess) + 1)
@@ -781,6 +783,21 @@ def poule(size, nb_poule):
             load[class_player][player]['poule'] = letter
     with open('register.json', "w") as f:
         json.dump(load, f, ensure_ascii=False, indent=4)
+
+
+@bot.command()  # admin command
+async def show_poule(ctx):
+    if str(ctx.author) in admins:
+        with open('register.json') as load:
+            load = json.load(load)
+        if load['poule_done'] != {}:
+            embed = discord.Embed(title="Répartition des joueurs dans les poules", description='', color=0xffff00)
+            for player in load['poule_done']:
+                embed.add_field(name=f"Joueur **{player}** dans : ", value=load['poule_done'][player], inline=False)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("Aucun joueur n'est répartit dans une poule")
+    print("Commande show_poule")
 
 
 bot.run(token)
