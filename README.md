@@ -6,7 +6,10 @@ The prefix for commands is "!"
 
 Commands are :
 <ul>
-  <li>_help</li>
+  <li>add_admin</li>
+  <li>delete_admin</li>
+  <li>add_class</li>
+  <li>help</li>
   <li>result</li>
   <li>result_confirm</li>
   <li>confirm_refusal</li>
@@ -19,14 +22,15 @@ Commands are :
   <li>list_player</li>
   <li>delete_class</li>
   <li>delete_player</li>
-  <li>reset</li>
-  <li>rebuild</li>
-  <li>poule</li>
+  <li>restart</li>
   <li>edit_color_profil</li>
   <li>show_profil</li>
+  <li>show_class</li>
   <li>create_sondage</li>
   <li>answer_sondage</li>
   <li>result_sondage</li>
   <li>delete_sondage</li>
   <li>clear</li>
+  <li>start</li>
+  <li>show_poule</li>
 </ul>
