@@ -34,3 +34,14 @@ Commands are :
   <li>start</li>
   <li>show_poule</li>
 </ul>
+
+## New
+functions :
+
+```python
+get(ctx)
+```
+
+```python
+push(ctx, load)
+```
