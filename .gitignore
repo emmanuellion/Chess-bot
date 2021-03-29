@@ -1,14 +1,3 @@
 *.json
 
 .idea
-
-.idea/Chess-bot.iml
-.idea/misc.xml
-.idea/modules.xml
-.idea/vcs.xml
-.idea/workspace.xml
-
-.idea/codeStyles/codeStyleConfig.xml
-
-.idea/inspectionProfiles/Project_Default.xml
-.idea/inspectionProfiles/profiles_settings.xml

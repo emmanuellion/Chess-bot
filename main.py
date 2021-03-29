@@ -9,7 +9,7 @@ import os
 
 print("La partie va commencer !")
 client = discord.Client()
-token = "TOKEN BOT DISCORD"
+token = "TOKEN BOT DISCORD
 bot = commands.Bot(command_prefix="!")
 bot.remove_command("help")
 cascade_mere_bis = ["id", "id_ban", "players", "poule_done", "id_ban_refusal", "sondage", "autorisation_register"]
@@ -57,13 +57,12 @@ def add_account(ctx, arg1, arg2, load, id_member):
 
 def search(ctx, load):
     classe, player, tree = None, None, None
-    for classe in load:
-        if classe not in cascade_mere:
-            for player in load[classe]:
-                if player != "score":
-                    if load[classe][player]['author'] == str(ctx.author):
-                        tree = load[classe][player]
-                        break
+    for classe in get_class(ctx):
+        for player in load[classe]:
+            if player != "score":
+                if load[classe][player]['author'] == str(ctx.author):
+                    tree = load[classe][player]
+                    break
             if tree is not None:
                 break
     return str(classe), str(player), tree
@@ -101,6 +100,7 @@ def next_match(load, banned, tree, id1):
         player['current-opponent'] = "Nobody"
         player['disponible'] = True
     looser['disponible'] = False
+    looser['current-opponent'] = "Vous êtes éliminé"
     looser['cool-down_result'] = 9999999999
     looser['cool-down_confirm'] = 9999999999
     return joueur_trouve, player, looser, opponent, winner
@@ -357,12 +357,11 @@ async def result_confirm(ctx, member: discord.Member, member1: discord.Member, a
                     if arg1 == "y":
                         delta = datetime.datetime.timestamp(datetime.datetime.now()) - tree['cool-down_confirm']
                         if delta >= 60:
-                            for classe in load:
-                                if classe in get_class(ctx):
-                                    for player in load[classe]:
-                                        if player != "score":
-                                            if load[classe][player]['loose'] == 0:
-                                                load[classe][player]['tour'] += 1
+                            for classe in get_class(ctx):
+                                for player in load[classe]:
+                                    if player != "score":
+                                        if load[classe][player]['loose'] == 0:
+                                            load[classe][player]['tour'] += 1
                             banned['score'] += float(load['id_ban'][id1]['score_id1'])
                             tree['score'] += float(load['id_ban'][id1]['score_id2'])
                             load[load['id_ban'][id1]['class_banned']]['score'] += float(
@@ -700,7 +699,7 @@ async def edit_color_profil(ctx, arg3):
 
 
 @bot.command()
-async def show_profil(ctx, member: discord.Member = None):
+async def show_profile(ctx, member: discord.Member = None):
     load = get(ctx)
     if member is not None:
         ctx.author = member
@@ -928,6 +927,154 @@ async def show_poule(ctx):
         else:
             await ctx.send("Aucun joueur n'est répartit dans une poule")
     print("Commande show_poule")
+
+
+@bot.command()  # admin command
+async def alive(ctx):
+    if str(ctx.author) in get_admins(str(ctx.guild)):
+        with open('main.json') as load:
+            load = json.load(load)
+        main = load[str(ctx.guild)]['class']
+        load = get(ctx)
+        embed = discord.Embed(title="Joueur encore en vie", description='', color=0xffff00)
+        for classe in main:
+            for player in load[classe]:
+                if player != "score":
+                    if load[classe][player]['current-opponent'] != "Vous êtes éliminé":
+                        embed.add_field(name=f"**{player}**", value="alive", inline=False)
+                    else:
+                        embed.add_field(name=f"**{player}**", value="is dead", inline=False)
+        await ctx.send(embed=embed)
+    print("Commande alive")
+
+
+@bot.command()  # admin command
+async def destroy(ctx, member: discord.Member, member2: discord.Member):
+    if str(ctx.author) in get_admins(str(ctx.guild)):
+        load = get(ctx)
+        ctx.author = member
+        classe, name, tree = search(ctx, load)
+        ctx.author = member2
+        classe2, name2, tree2 = search(ctx, load)
+        if tree is not None:
+            if tree2 is not None:
+                if tree['current-opponent'] == str(member2):
+                    alea = random.randint(1, 2)
+                    if alea == 1:
+                        id1 = tree['id']
+                        arg1 = classe
+                        arg2 = name
+                        id2 = tree2['id']
+                        arg4 = classe2
+                        arg5 = name2
+                        arg3 = 2
+                        arg6 = 0
+                        banned = tree
+                        confirm = tree2
+                    else:
+                        id1 = tree2['id']
+                        arg1 = classe2
+                        arg2 = name2
+                        id2 = tree['id']
+                        arg4 = classe
+                        arg5 = name
+                        arg3 = 0
+                        arg6 = 2
+                        banned = tree2
+                        confirm = tree
+                    load['id_ban'][id1] = id1
+                    load['id_ban'][id1] = {"banned": id1, "class_banned": arg1.lower(), "name_banned": arg2.lower(),
+                                           "to_confirm": id2, "class_confirm": arg4.lower(),
+                                           "name_confirm": arg5.lower(), "score_id1": float(arg3),
+                                           "score_id2": float(arg6)}
+                    for classe in get_class(ctx):
+                        for player in load[classe]:
+                            if player != "score":
+                                if load[classe][player]['loose'] == 0:
+                                    load[classe][player]['tour'] += 1
+                    banned['score'] += float(load['id_ban'][id1]['score_id1'])
+                    confirm['score'] += float(load['id_ban'][id1]['score_id2'])
+                    load[load['id_ban'][id1]['class_banned']]['score'] += float(load['id_ban'][id1]['score_id1'])
+                    load[load['id_ban'][id1]['class_confirm']]['score'] += float(load['id_ban'][id1]['score_id2'])
+                    joueur_trouve, player, looser, opponent, winner = next_match(load, banned, confirm, id1)
+                    if joueur_trouve == 1:
+                        await ctx.send(
+                            f"Le joueur {player['name']} <@{player['id']}> a un nouveau match avec {opponent['name']} <@{opponent['id']}>")
+                    else:
+                        await ctx.send(f"Aucun match n'a été trouvé pour {player['name']} vous êtes donc mis en attente"
+                                       f" pour l'instant")
+                    await ctx.send(f"Désolé à toi {looser['name']} mais tu es éliminé du tournoi !")
+                    banned['opponent'][confirm['name']] = confirm['author']
+                    confirm['opponent'][banned['name']] = banned['author']
+                    del load['id_ban'][id1]
+                    push(ctx, load)
+                else:
+                    await ctx.send("Ces deux personnes ne sont pas adversaire")
+            else:
+                await ctx.send("Le deuxième joueur n'existe pas")
+        else:
+            await ctx.send("Le premier joueur n'existe pas")
+    print("Commande destroy")
+
+
+@bot.command()
+async def force(ctx, member: discord.Member):
+    if str(ctx.author) in get_admins(str(ctx.guild)):
+        load = get(ctx)
+        ctx.author = member
+        classe, name, tree = search(ctx, load)
+        if tree is not None:
+            if tree['current-opponent'] != "Nobody":
+                for classe2 in get_class(ctx):
+                    for player2 in load[classe2]:
+                        if player2 != "score":
+                            if load[classe2][player2]['author'] == tree['current-opponent']:
+                                tree2 = load[classe2][player2]
+                                break
+                        if tree2 is not None:
+                            break
+                id1 = tree['id']
+                arg1 = classe
+                arg2 = tree['name']
+                id2 = tree2['id']
+                arg4 = classe2
+                arg5 = tree2['id']
+                arg3 = 2
+                arg6 = 0
+                banned = tree
+                confirm = tree2
+                load['id_ban'][id1] = id1
+                load['id_ban'][id1] = {"banned": id1, "class_banned": arg1.lower(), "name_banned": arg2.lower(),
+                                       "to_confirm": id2, "class_confirm": arg4.lower(),
+                                       "name_confirm": arg5.lower(), "score_id1": float(arg3),
+                                       "score_id2": float(arg6)}
+                for classe in get_class(ctx):
+                    for player in load[classe]:
+                        if player != "score":
+                            if load[classe][player]['loose'] == 0:
+                                load[classe][player]['tour'] += 1
+                banned['score'] += float(load['id_ban'][id1]['score_id1'])
+                confirm['score'] += float(load['id_ban'][id1]['score_id2'])
+                load[load['id_ban'][id1]['class_banned']]['score'] += float(load['id_ban'][id1]['score_id1'])
+                load[load['id_ban'][id1]['class_confirm']]['score'] += float(load['id_ban'][id1]['score_id2'])
+                joueur_trouve, player, looser, opponent, winner = next_match(load, banned, confirm, id1)
+                if joueur_trouve == 1:
+                    await ctx.send(
+                        f"Le joueur {player['name']} <@{player['id']}> a un nouveau match avec {opponent['name']} <@{opponent['id']}>")
+                else:
+                    await ctx.send(f"Aucun match n'a été trouvé pour {player['name']} vous êtes donc mis en attente"
+                                   f" pour l'instant")
+                await ctx.send(f"Désolé à toi {looser['name']} mais tu es éliminé du tournoi !")
+                banned['opponent'][confirm['name']] = confirm['author']
+                confirm['opponent'][banned['name']] = banned['author']
+                del load['id_ban'][id1]
+                push(ctx, load)
+            else:
+                await ctx.send(
+                    "Vous ne pouvez pas faire passer ce joueur au tour suivant car actuellement il n'a aucune adversaire")
+        else:
+            await ctx.send("La personne ne s'est pas enregistrée dans la compétition")
+    print("Commande force")
 
 
 bot.run(token)

@@ -24,7 +24,7 @@ Commands are :
   <li>delete_player</li>
   <li>restart</li>
   <li>edit_color_profil</li>
-  <li>show_profil</li>
+  <li>show_profile</li>
   <li>show_class</li>
   <li>create_sondage</li>
   <li>answer_sondage</li>
@@ -33,15 +33,18 @@ Commands are :
   <li>clear</li>
   <li>start</li>
   <li>show_poule</li>
+  <li>alive</li>
+  <li>destroy</li>
+  <li>force</li>
 </ul>
 
 ## New
 functions :
 
 ```python
-get(ctx)
+destroy(member, member2)
 ```
 
 ```python
-push(ctx, load)
+force(member)
 ```
