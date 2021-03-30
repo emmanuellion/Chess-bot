@@ -9,7 +9,7 @@ import os
 
 print("La partie va commencer !")
 client = discord.Client()
-token = "TOKEN BOT DISCORD
+token = "TOKEN BOT DISCORD"
 bot = commands.Bot(command_prefix="!")
 bot.remove_command("help")
 cascade_mere_bis = ["id", "id_ban", "players", "poule_done", "id_ban_refusal", "sondage", "autorisation_register"]
@@ -135,6 +135,15 @@ def get(ctx):
 def push(ctx, load):
     with open(str(ctx.guild) + '.json', "w") as f:
         json.dump(load, f, ensure_ascii=False, indent=4)
+
+
+def end_of_match(banned, id1, confirm, load):
+    banned['score'] += float(load['id_ban'][id1]['score_id1'])
+    confirm['score'] += float(load['id_ban'][id1]['score_id2'])
+    load[load['id_ban'][id1]['class_banned']]['score'] += float(load['id_ban'][id1]['score_id1'])
+    load[load['id_ban'][id1]['class_confirm']]['score'] += float(load['id_ban'][id1]['score_id2'])
+    joueur_trouve, player, looser, opponent, winner = next_match(load, banned, confirm, id1)
+    return joueur_trouve, player, looser, opponent, winner
 
 
 @bot.event
@@ -362,18 +371,12 @@ async def result_confirm(ctx, member: discord.Member, member1: discord.Member, a
                                     if player != "score":
                                         if load[classe][player]['loose'] == 0:
                                             load[classe][player]['tour'] += 1
-                            banned['score'] += float(load['id_ban'][id1]['score_id1'])
-                            tree['score'] += float(load['id_ban'][id1]['score_id2'])
-                            load[load['id_ban'][id1]['class_banned']]['score'] += float(
-                                load['id_ban'][id1]['score_id1'])
-                            load[load['id_ban'][id1]['class_confirm']]['score'] += float(
-                                load['id_ban'][id1]['score_id2'])
+                            (joueur_trouve, player, looser, opponent, winner) = end_of_match(banned, id1, tree, load)
                             embed = discord.Embed(title="VICTORY", description="", color=0x00ff00)
                             embed.add_field(name="\0",
                                             value=f"Résultat du match entre {member1} et {tree['author']} a été approuvé")
                             await member.send(embed=embed)
                             await ctx.send("Le résultat a bien été pris en compte !")
-                            joueur_trouve, player, looser, opponent, winner = next_match(load, banned, tree, id1)
                             if joueur_trouve == 1:
                                 await ctx.send(
                                     f"Le joueur {player['name']} <@{player['id']}> a un nouveau match avec {opponent['name']} <@{opponent['id']}>")
@@ -427,10 +430,8 @@ async def confirm_refusal(ctx, member: discord.Member, arg):
                 tree = load[load['id_ban_refusal'][id1]['class_confirm']][load['id_ban_refusal'][id1]['name_confirm']]
                 banned['score'] += float(load['id_ban_refusal'][id1]['score_id1'])
                 tree['score'] += float(load['id_ban_refusal'][id1]['score_id2'])
-                load[load['id_ban_refusal'][id1]['class_banned']]['score'] += float(
-                    load['id_ban_refusal'][id1]['score_id1'])
-                load[load['id_ban_refusal'][id1]['class_confirm']]['score'] += float(
-                    load['id_ban_refusal'][id1]['score_id2'])
+                load[load['id_ban_refusal'][id1]['class_banned']]['score'] += float(load['id_ban_refusal'][id1]['score_id1'])
+                load[load['id_ban_refusal'][id1]['class_confirm']]['score'] += float(load['id_ban_refusal'][id1]['score_id2'])
                 if load['id_ban_refusal'][id1]['score_id1'] < load['id_ban_refusal'][id1]['score_id2']:
                     banned['loose'] += 1
                     tree['win'] += 1
@@ -992,11 +993,7 @@ async def destroy(ctx, member: discord.Member, member2: discord.Member):
                             if player != "score":
                                 if load[classe][player]['loose'] == 0:
                                     load[classe][player]['tour'] += 1
-                    banned['score'] += float(load['id_ban'][id1]['score_id1'])
-                    confirm['score'] += float(load['id_ban'][id1]['score_id2'])
-                    load[load['id_ban'][id1]['class_banned']]['score'] += float(load['id_ban'][id1]['score_id1'])
-                    load[load['id_ban'][id1]['class_confirm']]['score'] += float(load['id_ban'][id1]['score_id2'])
-                    joueur_trouve, player, looser, opponent, winner = next_match(load, banned, confirm, id1)
+                    (joueur_trouve, player, looser, opponent, winner) = end_of_match(banned, id1, tree, load)
                     if joueur_trouve == 1:
                         await ctx.send(
                             f"Le joueur {player['name']} <@{player['id']}> a un nouveau match avec {opponent['name']} <@{opponent['id']}>")
@@ -1053,11 +1050,7 @@ async def force(ctx, member: discord.Member):
                         if player != "score":
                             if load[classe][player]['loose'] == 0:
                                 load[classe][player]['tour'] += 1
-                banned['score'] += float(load['id_ban'][id1]['score_id1'])
-                confirm['score'] += float(load['id_ban'][id1]['score_id2'])
-                load[load['id_ban'][id1]['class_banned']]['score'] += float(load['id_ban'][id1]['score_id1'])
-                load[load['id_ban'][id1]['class_confirm']]['score'] += float(load['id_ban'][id1]['score_id2'])
-                joueur_trouve, player, looser, opponent, winner = next_match(load, banned, confirm, id1)
+                (joueur_trouve, player, looser, opponent, winner) = end_of_match(banned, id1, tree, load)
                 if joueur_trouve == 1:
                     await ctx.send(
                         f"Le joueur {player['name']} <@{player['id']}> a un nouveau match avec {opponent['name']} <@{opponent['id']}>")
