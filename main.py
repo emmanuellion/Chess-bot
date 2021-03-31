@@ -6,10 +6,11 @@ import datetime
 import time
 import math
 import os
+from dotenv import load_dotenv
 
 print("La partie va commencer !")
 client = discord.Client()
-token = "TOKEN BOT DISCORD"
+load_dotenv(dotenv_path="config")
 bot = commands.Bot(command_prefix="!")
 bot.remove_command("help")
 cascade_mere_bis = ["id", "id_ban", "players", "poule_done", "id_ban_refusal", "sondage", "autorisation_register"]
@@ -430,8 +431,10 @@ async def confirm_refusal(ctx, member: discord.Member, arg):
                 tree = load[load['id_ban_refusal'][id1]['class_confirm']][load['id_ban_refusal'][id1]['name_confirm']]
                 banned['score'] += float(load['id_ban_refusal'][id1]['score_id1'])
                 tree['score'] += float(load['id_ban_refusal'][id1]['score_id2'])
-                load[load['id_ban_refusal'][id1]['class_banned']]['score'] += float(load['id_ban_refusal'][id1]['score_id1'])
-                load[load['id_ban_refusal'][id1]['class_confirm']]['score'] += float(load['id_ban_refusal'][id1]['score_id2'])
+                load[load['id_ban_refusal'][id1]['class_banned']]['score'] += float(
+                    load['id_ban_refusal'][id1]['score_id1'])
+                load[load['id_ban_refusal'][id1]['class_confirm']]['score'] += float(
+                    load['id_ban_refusal'][id1]['score_id2'])
                 if load['id_ban_refusal'][id1]['score_id1'] < load['id_ban_refusal'][id1]['score_id2']:
                     banned['loose'] += 1
                     tree['win'] += 1
@@ -1070,4 +1073,18 @@ async def force(ctx, member: discord.Member):
     print("Commande force")
 
 
-bot.run(token)
+@bot.command()
+async def move(ctx, id):
+    print(ctx.message.content)
+    print(ctx.channel.id)
+    to_move = 0
+    for message in await ctx.message.channel.history(limit=100).flatten():
+        if str(message.id) == str(id):
+            ctx.message = message
+            to_move = message.content
+            await ctx.message.delete()
+    ctx.channel.id = 815240535966613554
+    await ctx.send(to_move)
+
+
+bot.run(os.getenv("TOKEN"))
