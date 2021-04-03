@@ -940,16 +940,31 @@ async def alive(ctx):
             load = json.load(load)
         main = load[str(ctx.guild)]['class']
         load = get(ctx)
-        embed = discord.Embed(title="Joueur encore en vie", description='', color=0xffff00)
+        embed = discord.Embed(title="Joueurs encore en vie :", description='', color=0xffff00)
         for classe in main:
             for player in load[classe]:
                 if player != "score":
                     if load[classe][player]['current-opponent'] != "Vous êtes éliminé":
-                        embed.add_field(name=f"**{player}**", value="alive", inline=False)
-                    else:
-                        embed.add_field(name=f"**{player}**", value="is dead", inline=False)
+                        embed.add_field(name=f"**{player}**", value=load[classe][player]['poule'], inline=False)
         await ctx.send(embed=embed)
     print("Commande alive")
+
+
+@bot.command()  # admin command
+async def isDead(ctx):
+    if str(ctx.author) in get_admins(str(ctx.guild)):
+        with open('main.json') as load:
+            load = json.load(load)
+        main = load[str(ctx.guild)]['class']
+        load = get(ctx)
+        embed = discord.Embed(title="Joueurs morts :", description='', color=0xffff00)
+        for classe in main:
+            for player in load[classe]:
+                if player != "score":
+                    if load[classe][player]['current-opponent'] == "Vous êtes éliminé":
+                        embed.add_field(name=f"**{player}**", value=load[classe][player]['poule'], inline=False)
+        await ctx.send(embed=embed)
+    print("Commande isDead")
 
 
 @bot.command()  # admin command
@@ -1073,17 +1088,22 @@ async def force(ctx, member: discord.Member):
     print("Commande force")
 
 
+# -------------------Bot projet tut-------------
+    
 @bot.command()
-async def move(ctx, id):
+async def move(ctx, id_message, name_channel):
     print(ctx.message.content)
     print(ctx.channel.id)
+    print(ctx.guild.channels)
     to_move = 0
+    for channel in ctx.guild.channels:
+        if channel.name == name_channel:
+            ctx.channel = channel
     for message in await ctx.message.channel.history(limit=100).flatten():
-        if str(message.id) == str(id):
+        if str(message.id) == str(id_message):
             ctx.message = message
             to_move = message.content
             await ctx.message.delete()
-    ctx.channel.id = 815240535966613554
     await ctx.send(to_move)
 
 
