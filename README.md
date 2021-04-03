@@ -34,17 +34,19 @@ Commands are :
   <li>start</li>
   <li>show_poule</li>
   <li>alive</li>
+  <li>isDead</li>
   <li>destroy</li>
   <li>force</li>
+  <li>move</li>
 </ul>
 
 ## New
 functions :
 
 ```python
-destroy(member, member2)
+move(id_message, name_channel)
 ```
 
 ```python
-force(member)
+isDead()
 ```
