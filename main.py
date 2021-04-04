@@ -1107,4 +1107,11 @@ async def move(ctx, id_message, name_channel):
     await ctx.send(to_move)
 
 
+@bot.command()
+async def wa(ctx):
+    embed = discord.Embed(title="Joueurs encore en vie :", description='Date A Live \n 131:kakera: \n React with any '
+                                                                       'emoji to claim! \n (Read $togglereact)',
+                          color=0xffff00,image="https://i.imgur.com/dpBgivA.png")
+    await ctx.send(embed=embed)
+
 bot.run(os.getenv("TOKEN"))
