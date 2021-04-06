@@ -1,5 +1,7 @@
 *.json
 config
+*config
+config*
 *config*
 
 .idea
