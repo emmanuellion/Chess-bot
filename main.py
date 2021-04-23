@@ -747,67 +747,71 @@ async def show_class(ctx):
 async def create_sondage(ctx, quest, poss1, poss2):
     if str(ctx.author) in get_admins(str(ctx.guild)):
         load = get(ctx)
-        id_sondage = 1
-        while str(id_sondage) in load['sondage']:
-            id_sondage += 1
+        embed = discord.Embed(title="Sondage", description=f"{quest}", color=0x6F00F6)
+        embed.add_field(name="Réagissez avec l'emoji 1️⃣ pour:", value=poss1, inline=False)
+        embed.add_field(name="Réagissez avec l'emoji 2️⃣ pour:", value=poss2, inline=False)
+        await ctx.send(embed=embed)
+        time.sleep(1)
+        for message in await ctx.message.channel.history(limit=1).flatten():
+            id_sondage = message.id
         load['sondage'][id_sondage] = {'question': quest, 'answer1': poss1, 'answer2': poss2, 'nb_vote': 0, 'voter': {},
                                        'nb_answer1': 0, 'nb_answer2': 0}
-        embed = discord.Embed(title=f"Sondage n°{id_sondage}", description=f"{quest}", color=0x6F00F6)
-        embed.add_field(name="Choix 1 :", value=poss1, inline=False)
-        embed.add_field(name="Choix 2 :", value=poss2, inline=False)
-        await ctx.send(embed=embed)
         push(ctx, load)
     print("Commande create_sondage")
 
 
-@bot.command()
-async def answer_sondage(ctx, id_sondage, choice):
-    load = get(ctx)
-    trash, trash, tree = search(ctx, load)
-    if tree is not None:
-        if id_sondage in load['sondage']:
-            sondage = load['sondage'][id_sondage]
-            if str(ctx.author) not in sondage['voter']:
-                if str(choice.lower()) == sondage['answer1'].lower() or sondage['answer2'].lower():
-                    sondage['nb_vote'] += 1
-                    sondage['voter'][str(ctx.author)] = str(ctx.author)
-                    if str(choice.lower()) == sondage['answer1'].lower():
-                        sondage['nb_answer1'] += 1
-                    else:
-                        sondage['nb_answer2'] += 1
-                    await ctx.send("Votre vote a bien été pris en compte\n**Ce message s'effacera dans 3 secondes**")
-                    push(ctx, load)
-                    time.sleep(3)
-                    await ctx.channel.purge(limit=2)
-                else:
-                    await ctx.send("Veuillez saisir une réponse valide")
+@bot.event
+async def on_raw_reaction_add(payload):
+    guild = bot.get_guild(payload.guild_id)
+    with open(str(guild) + '.json') as load:
+        load = json.load(load)
+    ctx = bot.get_channel(payload.channel_id)
+    member = await bot.get_guild(payload.guild_id).fetch_member(payload.user_id)
+    sondage = load['sondage'][str(payload.message_id)]
+    choice = str(payload.emoji)
+    if choice == "1️⃣" or choice == "2️⃣":
+        if str(member) not in sondage['voter']:
+            sondage['nb_vote'] += 1
+            sondage['voter'][str(member)] = str(member)
+            if choice == "1️⃣":
+                sondage['nb_answer1'] += 1
             else:
-                await ctx.send("Vous ne pouvez pas voter plus d'une fois")
+                sondage['nb_answer2'] += 1
+            push(ctx, load)
         else:
-            await ctx.send(
-                f"L'id du message n'existe pas actuellement voici l'id des sondages existants : {load['sondage']}")
+            await ctx.send("Vous ne pouvez donner votre avis que pour 1 choix")
+            for mess in await ctx.history(limit=30).flatten():
+                if str(mess.id) == str(payload.message_id):
+                    message = mess
+            await message.clear_reaction(choice)
     else:
-        await ctx.send("Veuillez créer un compte avant de faire cette commande")
-    print("Commande answer_sondage")
+        await ctx.send("Veuillez réagir avec les emojs : 1️⃣ ou 2️⃣")
+        for mess in await ctx.history(limit=30).flatten():
+            if str(mess.id) == str(payload.message_id):
+                message = mess
+        await message.clear_reaction(choice)
+        time.sleep(2)
+        await ctx.purge(limit=1)
+    print("Event reaction added")
 
 
-@bot.command()  # admin command
-async def result_sondage(ctx, id_sondage):
-    if str(ctx.author) in get_admins(str(ctx.guild)):
-        load = get(ctx)
-        if id_sondage in load['sondage']:
-            sondage = load['sondage'][id_sondage]
-            embed = discord.Embed(title=f"Résultat du sondage n°{id_sondage}", description='', color=0x6F00F6)
-            embed.add_field(name="Nombre de votant total :", value=sondage['nb_vote'], inline=False)
-            embed.add_field(name=f"Nombre de vote pour '{sondage['answer1']}' :", value=sondage['nb_answer1'],
-                            inline=False)
-            embed.add_field(name=f"Nombre de vote pour '{sondage['answer2']}' :", value=sondage['nb_answer2'],
-                            inline=False)
-            await ctx.send(embed=embed)
-        else:
-            await ctx.send(
-                f"L'id du message n'existe pas actuellement voici l'id des sondages existants : {load['sondage']}")
-    print("Commande result_sondage")
+@bot.event
+async def on_raw_reaction_remove(payload):
+    guild = bot.get_guild(payload.guild_id)
+    with open(str(guild) + '.json') as load:
+        load = json.load(load)
+    ctx = bot.get_channel(payload.channel_id)
+    member = await bot.get_guild(payload.guild_id).fetch_member(payload.user_id)
+    sondage = load['sondage'][str(payload.message_id)]
+    choice = str(payload.emoji)
+    sondage['nb_vote'] -= 1
+    del sondage['voter'][str(member)]
+    if choice == "1️⃣":
+        sondage['nb_answer1'] -= 1
+    else:
+        sondage['nb_answer2'] -= 1
+    push(ctx, load)
+    print("Event reaction removed")
 
 
 @bot.command()  # admin command
@@ -1089,7 +1093,7 @@ async def force(ctx, member: discord.Member):
 
 
 # -------------------Bot projet tut-------------
-    
+
 @bot.command()
 async def move(ctx, id_message, name_channel):
     print(ctx.message.content)
@@ -1111,7 +1115,8 @@ async def move(ctx, id_message, name_channel):
 async def wa(ctx):
     embed = discord.Embed(title="Joueurs encore en vie :", description='Date A Live \n 131:kakera: \n React with any '
                                                                        'emoji to claim! \n (Read $togglereact)',
-                          color=0xffff00,image="https://i.imgur.com/dpBgivA.png")
+                          color=0xffff00, image="https://i.imgur.com/dpBgivA.png")
     await ctx.send(embed=embed)
+
 
 bot.run(os.getenv("TOKEN"))
