@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 print("La partie va commencer !")
 client = discord.Client()
-load_dotenv(dotenv_path="config")
+load_dotenv(dotenv_path="config.txt")
 bot = commands.Bot(command_prefix="!")
 bot.remove_command("help")
 cascade_mere_bis = ["id", "id_ban", "players", "poule_done", "id_ban_refusal", "sondage", "autorisation_register"]
