@@ -6,17 +6,17 @@ import datetime
 import time
 import math
 import os
-from dotenv import load_dotenv
 
 print("La partie va commencer !")
 client = discord.Client()
-load_dotenv(dotenv_path="config.txt")
+token = "ODAxODc4NjAxMDM3MzgxNjYy.YAnFpA.S6G6v5qXQFG60kDO8ZmO38xuiJQ"
 bot = commands.Bot(command_prefix="!")
 bot.remove_command("help")
 cascade_mere_bis = ["id", "id_ban", "players", "poule_done", "id_ban_refusal", "sondage", "autorisation_register"]
 cascade_mere = []
 all_poule = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'i']
 list_poule = []
+my_ping = 'Mabule#0001' #Veiller à bien mettre à jour mon tag discord
 try:
     load = open('main.json')
 except FileNotFoundError:
@@ -58,7 +58,7 @@ def add_account(ctx, arg1, arg2, load, id_member):
 
 def search(ctx, load):
     classe, player, tree = None, None, None
-    for classe in get_class(ctx):
+    for classe in get_class(str(ctx.guild)):
         for player in load[classe]:
             if player != "score":
                 if load[classe][player]['author'] == str(ctx.author):
@@ -124,7 +124,10 @@ def get_class(ctx):
     with open('main.json') as load:
         load = json.load(load)
     list_class = load[ctx]['class']
-    return list_class
+    if list_class == {}:
+        return None
+    else:
+        return list_class
 
 
 def get(ctx):
@@ -206,7 +209,7 @@ async def on_ready():
                 load['sondage'] = {}
             with open(file, "w") as f:
                 json.dump(load, f, ensure_ascii=False, indent=4)
-    await bot.change_presence(status=discord.Status.online, activity=discord.Game("Construction.exe"))
+    await bot.change_presence(status=discord.Status.online, activity=discord.Game("!help"))
     print("La partie commence ...")
 
 
@@ -216,7 +219,7 @@ async def on_guild_join(ctx):
     with open('main.json') as load:
         load = json.load(load)
     load['cascade_mere'][guild] = guild
-    load[guild] = {"admins": {"Mabule#2890": "Mabule#2890"}, "class": {}}
+    load[guild] = {"admins": {my_ping: True}, "class": {}}
     with open('main.json', "w") as f:
         json.dump(load, f, ensure_ascii=False, indent=4)
     open(guild + '.json', 'w')
@@ -242,14 +245,14 @@ async def on_guild_remove(ctx):
 
 
 @bot.command()  # admin command
-async def add_admin(ctx, member: discord.Member = None, king=False):
+async def add_admin(ctx, member: discord.Member = None, king='xxxxx'):
     if str(ctx.author) in get_admins(str(ctx.guild)):
         if member is not None:
             with open('main.json') as load:
                 load = json.load(load)
-            if load[str(ctx.guild)]['admins'][str(member)]:
+            if load[str(ctx.guild)]['admins'][str(ctx.author)]:
                 if str(member) not in get_admins(str(ctx.guild)):
-                    if not king:
+                    if king == 'xxxxx':
                         load[str(ctx.guild)]['admins'][str(member)] = False
                         await ctx.send(f"La personne <@{member.id}> est bien devenue admin")
                     else:
@@ -271,15 +274,18 @@ async def add_admin(ctx, member: discord.Member = None, king=False):
 @bot.command()  # admin command
 async def delete_admin(ctx, member: discord.Member):
     if str(ctx.author) in get_admins(str(ctx.guild)):
-        with open('main.json') as load:
-            load = json.load(load)
-        if str(member) in get_admins(str(ctx.guild)):
-            del load[str(ctx.guild)]['admins'][str(member)]
-            await ctx.send(f"La personne <@{member.id}> n'est plus admin")
-            with open('main.json', "w") as f:
-                json.dump(load, f, ensure_ascii=False, indent=4)
+        if str(member) != my_ping:
+            with open('main.json') as load:
+                load = json.load(load)
+            if str(member) in get_admins(str(ctx.guild)):
+                del load[str(ctx.guild)]['admins'][str(member)]
+                await ctx.send(f"La personne <@{member.id}> n'est plus admin")
+                with open('main.json', "w") as f:
+                    json.dump(load, f, ensure_ascii=False, indent=4)
+            else:
+                await ctx.send(f"La personne <@{member.id}> n'était pas admin")
         else:
-            await ctx.send(f"La personne <@{member.id}> n'était pas admin")
+            await ctx.send("Vous ne pouvez pas effacer le développeur des supers admins")
     print("Commande delete_admin")
 
 
@@ -573,8 +579,10 @@ async def register(ctx, member: discord.Member = None, arg1=None, arg2=None):
                                     else:
                                         await ctx.send("Veillez à ne pas donner de nom de ce type ;)")
                                 else:
-                                    await ctx.send(
-                                        f"Veuillez saisir une classe parmi la liste suivante : {get_class(str(ctx.guild))}")
+                                    if get_class(str(ctx.guild)) is None:
+                                        await ctx.send("Il faudrait d'abord commencer par renseigner la liste des clases permises via la commande !add_class par des admins")
+                                    else:
+                                        await ctx.send(f"Veuillez saisir une classe parmi la liste suivante : {get_class(str(ctx.guild))}")
                             else:
                                 await ctx.send("Veuillez enregistrer un compte pour vous et pas pour quelqu'un d'autre")
                         else:
@@ -851,6 +859,9 @@ async def show_class(ctx):
     print("Commande show_class")
 
 
+reaction = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']
+
+
 @bot.command()  # admin command
 async def create_sondage(ctx, quest=None, poss1=None, poss2=None, poss3=None, poss4=None, poss5=None):
     if str(ctx.author) in get_admins(str(ctx.guild)):
@@ -882,6 +893,7 @@ async def create_sondage(ctx, quest=None, poss1=None, poss2=None, poss3=None, po
                 time.sleep(1)
                 for message in await ctx.message.channel.history(limit=1).flatten():
                     id_sondage = message.id
+                    break
                 contenu['nb_rep'] = nb_rep
                 load['sondage'][id_sondage] = contenu
                 push(ctx, load)
@@ -892,51 +904,62 @@ async def create_sondage(ctx, quest=None, poss1=None, poss2=None, poss3=None, po
     print("Commande create_sondage")
 
 
-reaction = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣']
-
-
 @bot.event
 async def on_raw_reaction_add(payload):
-    guild = bot.get_guild(payload.guild_id)
-    with open(str(guild) + '.json') as load:
-        load = json.load(load)
-    ctx = bot.get_channel(payload.channel_id)
-    member = await bot.get_guild(payload.guild_id).fetch_member(payload.user_id)
-    sondage = load['sondage'][str(payload.message_id)]
-    choice = str(payload.emoji)
-    if choice in reaction:
-        if str(member) not in sondage['voter']:
-            sondage['nb_vote'] += 1
-            sondage['voter'][str(member)] = str(member)
-            round = 1
-            for emote in reaction:
-                if emote == choice:
+    #--------------------------------------------------------------------------------
+    if str(payload.message_id) == "839637284369727518":
+        admin_role = bot.get_guild(payload.guild_id).roles
+        for role in admin_role:
+            if str(role.name) == "🌺 Membre":
+                ad = role
+        member = await bot.get_guild(payload.guild_id).fetch_member(payload.user_id)
+        await member.add_roles(ad)
+        
+    # --------------------------------------------------------------------------------
+    if payload.user_id != "801878601037381662":
+        guild = bot.get_guild(payload.guild_id)
+        with open(str(guild) + '.json') as load:
+            load = json.load(load)
+        ctx = bot.get_channel(payload.channel_id)
+        member = await bot.get_guild(payload.guild_id).fetch_member(payload.user_id)
+        try:
+            sondage = load['sondage'][str(payload.message_id)]
+            choice = str(payload.emoji)
+            if choice in reaction:
+              if str(member) not in sondage['voter']:
+                sondage['nb_vote'] += 1
+                sondage['voter'][str(member)] = str(member)
+                round = 1
+                for emote in reaction:
+                  if emote == choice:
                     sondage['nb_answer' + str(round)] += 1
-                round += 1
-            push(ctx, load)
-        else:
-            await ctx.send("⚠ Vous ne pouvez donner votre avis que pour 1 choix⚠ ")
-            for mess in await ctx.history(limit=30).flatten():
-                if str(mess.id) == str(payload.message_id):
+                    round += 1
+                    push(ctx, load)
+              else:
+                await ctx.send("⚠ Vous ne pouvez donner votre avis que pour 1 choix⚠ ")
+                for mess in await ctx.history(limit=30).flatten():
+                  if str(mess.id) == str(payload.message_id):
                     message = mess
                     break
-            await message.clear_reaction(choice)
-            time.sleep(2)
-            await ctx.purge(limit=1)
-    else:
-        list_react = []
-        i = 0
-        while i < sondage['nb_rep']:
-            list_react.append(reaction[i])
-            i += 1
-        await ctx.send("Veuillez réagir avec les emojs : " + str(list_react))
-        for mess in await ctx.history(limit=30).flatten():
-            if str(mess.id) == str(payload.message_id):
-                message = mess
-                break
-        await message.clear_reaction(choice)
-        time.sleep(2)
-        await ctx.purge(limit=1)
+                await message.clear_reaction(choice)
+                time.sleep(2)
+                await ctx.purge(limit=1)
+            else:
+              list_react = []
+              i = 0
+              while i < sondage['nb_rep']:
+                list_react.append(reaction[i])
+                i += 1
+              await ctx.send("Veuillez réagir avec les emojs : " + str(list_react))
+              for mess in await ctx.history(limit=30).flatten():
+                if str(mess.id) == str(payload.message_id):
+                  message = mess
+                  break
+              await message.clear_reaction(choice)
+              time.sleep(2)
+              await ctx.purge(limit=1)
+        except KeyError:
+          pass
     print("Event reaction added")
 
 
@@ -947,17 +970,20 @@ async def on_raw_reaction_remove(payload):
         load = json.load(load)
     ctx = bot.get_channel(payload.channel_id)
     member = await bot.get_guild(payload.guild_id).fetch_member(payload.user_id)
-    sondage = load['sondage'][str(payload.message_id)]
-    choice = str(payload.emoji)
-    sondage['nb_vote'] -= 1
-    del sondage['voter'][str(member)]
-    round = 1
-    for emote in reaction:
+    try:
+      sondage = load['sondage'][str(payload.message_id)]
+      choice = str(payload.emoji)
+      sondage['nb_vote'] -= 1
+      del sondage['voter'][str(member)]
+      round = 1
+      for emote in reaction:
         if emote == choice:
-            sondage['nb_answer' + str(round)] -= 1
-            break
+          sondage['nb_answer' + str(round)] -= 1
+          break
         round += 1
-    push(ctx, load)
+      push(ctx, load)
+    except KeyError:
+      pass
     print("Event reaction removed")
 
 
@@ -1293,4 +1319,4 @@ async def wa(ctx):
     await ctx.send(embed=embed)
 
 
-bot.run(os.getenv("TOKEN"))
+bot.run(token)
