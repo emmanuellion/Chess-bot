@@ -9,7 +9,7 @@ import os
 
 print("La partie va commencer !")
 client = discord.Client()
-token = "ODAxODc4NjAxMDM3MzgxNjYy.YAnFpA.S6G6v5qXQFG60kDO8ZmO38xuiJQ"
+token = "ODAxODc4NjAxMDM3MzgxNjYy.YAnFpA.S6G6v5qXQFG60kDO8ZmO38xuiJQ" #Don't worry the token is no more usable
 bot = commands.Bot(command_prefix="!")
 bot.remove_command("help")
 cascade_mere_bis = ["id", "id_ban", "players", "poule_done", "id_ban_refusal", "sondage", "autorisation_register"]
